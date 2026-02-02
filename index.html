@@ -2,211 +2,602 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>记录美好时光！</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>工作日记</title>
 <style>
+    :root {
+        --bg-color: #E0E5EC;
+        --primary-color: #6D5B98;
+        --light-shadow: #FFFFFF;
+        --dark-shadow: #A3B1C6;
+        --text-color: #2D3748;
+        --success-color: #48BB78;
+        --danger-color: #F56565;
+        --card-padding: 15px;
+        --card-margin: 10px;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+        position: relative;
+    }
+
     body {
         font-family: 'Microsoft YaHei', sans-serif;
-        margin: 20px;
-        max-width: 800px;
-        margin: auto;
-        line-height: 1.1;
-        background-color: #F4F7FA;
+        padding: 10px;
+        width: 100%;
+        min-height: 100vh;
+        background-color: var(--bg-color);
+        color: var(--text-color);
+        line-height: 1.4;
+        font-size: 14px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0;
     }
+    
     h1 {
         text-align: center;
-        color: #34495e;
-        margin-bottom: 20px;
+        color: var(--primary-color);
+        margin: 10px 0 20px 0;
+        font-size: 1.6rem;
+        font-weight: 700;
+        text-shadow: 2px 2px 4px var(--dark-shadow), -2px -2px 4px var(--light-shadow);
+        letter-spacing: 0.5px;
+        padding: 0 10px;
     }
+    
     .toast {
         position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: #3498db;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        background-color: var(--primary-color);
         color: white;
-        padding: 10px 20px;
-        border-radius: 12px;
+        padding: 12px;
+        border-radius: 15px;
         text-align: center;
         z-index: 1000;
         display: none;
         animation: slideIn 0.3s ease-out;
+        box-shadow: 4px 4px 8px var(--dark-shadow), -4px -4px 8px var(--light-shadow);
+        font-weight: 500;
+        font-size: 14px;
     }
+    
     @keyframes slideIn {
         from {
             opacity: 0;
-            transform: translateX(-50%) translateY(-20px);
+            transform: translateY(-20px);
         }
         to {
             opacity: 1;
-            transform: translateX(-50%);
+            transform: translateY(0);
         }
     }
+    
+    .section-container {
+        background: var(--bg-color);
+        border-radius: 20px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: 5px 5px 10px var(--dark-shadow), 
+                    -5px -5px 10px var(--light-shadow);
+    }
+    
+    .add-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .input-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    input[type="date"], input[type="text"], input[type="number"] {
+        width: 100%;
+        padding: 12px 15px;
+        border: none;
+        border-radius: 12px;
+        background-color: var(--bg-color);
+        box-shadow: inset 3px 3px 6px var(--dark-shadow), 
+                    inset -3px -3px 6px var(--light-shadow);
+        color: var(--text-color);
+        font-size: 14px;
+        transition: all 0.3s ease;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+    
+    input:focus {
+        outline: none;
+        box-shadow: inset 2px 2px 4px var(--dark-shadow), 
+                    inset -2px -2px 4px var(--light-shadow);
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .button-group button {
+        flex: 1;
+        margin: 0;
+    }
+    
+    button {
+        padding: 12px 15px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        background-color: var(--bg-color);
+        color: var(--primary-color);
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        box-shadow: 4px 4px 8px var(--dark-shadow), 
+                    -4px -4px 8px var(--light-shadow);
+    }
+    
+    button:hover, button:active {
+        box-shadow: 2px 2px 4px var(--dark-shadow), 
+                    -2px -2px 4px var(--light-shadow);
+        transform: translateY(2px);
+    }
+    
+    /* 添加记录按钮特殊样式 - 使用醒目的颜色 */
+    .add-button {
+        background-color: var(--primary-color) !important;
+        color: white !important;
+        box-shadow: 4px 4px 8px rgba(109, 91, 152, 0.3), 
+                    -4px -4px 8px rgba(255, 255, 255, 0.8) !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px;
+    }
+    
+    .add-button:hover, .add-button:active {
+        background-color: #5A4B80 !important;
+        box-shadow: 2px 2px 4px rgba(109, 91, 152, 0.3), 
+                    -2px -2px 4px rgba(255, 255, 255, 0.8) !important;
+        transform: translateY(2px);
+    }
+    
+    /* 修改表格结构：使用更紧凑的布局，移除横向滚动 */
     table {
         width: 100%;
         border-collapse: collapse;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-        border-radius: 5px;
-        overflow: hidden;
+        border-spacing: 0;
     }
+    
     th, td {
-        border: 1px solid #FAFAFA;
-        padding: 10px;
+        padding: 10px 6px;
         text-align: center;
+        border-bottom: 1px solid rgba(163, 177, 198, 0.2);
+        font-size: 13px;
+        word-break: break-word;
+        overflow-wrap: break-word;
     }
+    
     th {
-        background-color: #3498db;
+        background-color: var(--primary-color);
         color: white;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        white-space: nowrap;
     }
-    .add-form {
+    
+    th:first-child {
+        border-radius: 15px 0 0 0;
+    }
+    
+    th:last-child {
+        border-radius: 0 15px 0 0;
+    }
+    
+    td {
+        background-color: var(--bg-color);
+    }
+    
+    tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* 调整列宽，使其适应小屏幕 */
+    th:nth-child(1), td:nth-child(1) { /* 日期列 */
+        width: 18%;
+        min-width: 70px;
+    }
+    
+    th:nth-child(2), td:nth-child(2) { /* 工作内容列 */
+        width: 32%;
+        min-width: 100px;
+        max-width: 150px;
+        text-align: left;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    th:nth-child(3), td:nth-child(3) { /* 工时列 */
+        width: 15%;
+        min-width: 50px;
+    }
+    
+    th:nth-child(4), td:nth-child(4) { /* 工资列 */
+        width: 20%;
+        min-width: 70px;
+    }
+    
+    th:nth-child(5), td:nth-child(5) { /* 操作列 */
+        width: 15%;
+        min-width: 70px;
+    }
+    
+    .table-actions {
         display: flex;
-        justify-content: flex-start;
-        margin-bottom: 20px;
-        background: #fff;
-        padding: 20px;
-        border-radius: 5px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        gap: 5px;
+        justify-content: center;
+        flex-wrap: wrap;
     }
-    .input-group {
-        flex: 1;
-        margin-right: 10px;
-    }
-    input[type="date"], input[type="text"], input[type="number"] {
-        width: 94%;
-        padding: 10px;
-        margin-bottom: 10px;
-        border: 1px solid #4D5C92;
-        border-radius: 8px;
-        transition: border-color 0.3s;
-    }
-    input:focus {
-        border-color: #3498DB;
-        outline: none;
-    }
-    button {
-        padding: 10px 15px;
+    
+    .action-btn {
+        padding: 5px 8px;
         border: none;
         border-radius: 8px;
         cursor: pointer;
-        background-color: #4D5C92;
-        color: white;
-        transition: background-color 0.3s;
+        font-weight: 600;
+        font-size: 11px;
+        transition: all 0.3s ease;
+        box-shadow: 2px 2px 4px var(--dark-shadow), 
+                    -2px -2px 4px var(--light-shadow);
+        white-space: nowrap;
+        margin: 2px;
     }
-    button:hover {
-        background-color: #425280;
+    
+    .view-btn {
+        background-color: var(--bg-color);
+        color: var(--primary-color);
     }
-    .total-hours, .monthly-hours {
-        font-weight: bold;
-        margin-top: 10px;
-        padding: 10px;
-        background: #eafaf1;
-        border-radius: 5px;
+    
+    .delete-btn {
+        background-color: var(--bg-color);
+        color: var(--danger-color);
+    }
+    
+    .action-btn:active {
+        box-shadow: inset 2px 2px 4px var(--dark-shadow), 
+                    inset -2px -2px 4px var(--light-shadow);
+        transform: translateY(2px);
+    }
+    
+    .summary-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-bottom: 70px;
+    }
+    
+    .summary-card {
+        background: var(--bg-color);
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 5px 5px 10px var(--dark-shadow), 
+                    -5px -5px 10px var(--light-shadow);
+    }
+    
+    .summary-card h3 {
+        color: var(--primary-color);
+        margin: 0 0 12px 0;
+        font-size: 16px;
         text-align: center;
-        font-size: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid rgba(109, 91, 152, 0.2);
     }
+    
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(163, 177, 198, 0.2);
+    }
+    
+    .summary-row:last-child {
+        border-bottom: none;
+    }
+    
+    .summary-label {
+        color: var(--text-color);
+        font-weight: 600;
+        font-size: 14px;
+    }
+    
+    .summary-value {
+        color: var(--primary-color);
+        font-weight: 700;
+        font-size: 14px;
+    }
+    
     #scroll-button {
         position: fixed;
         bottom: 20px;
         right: 20px;
-        width: 30px;
-        height: 30px;
+        width: 45px;
+        height: 45px;
         padding: 0;
-        line-height: 20px;
-        font-size: 15px;
+        font-size: 18px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-    .content-button {
-        background: none;
+        box-shadow: 4px 4px 8px var(--dark-shadow), 
+                    -4px -4px 8px var(--light-shadow);
+        z-index: 100;
         border: none;
-        color: #4D5C92;
+        background-color: var(--bg-color);
+        color: var(--primary-color);
         cursor: pointer;
-        padding: 0;
-        text-decoration: none;
-        font-family: inherit;
-        font-size: 14px;
-        display: inline;
     }
-    .content-button:hover {
-        color: #2980b9;
-    }
-    .delete-button {
-        background: none;
-        border: none;
-        color: #e74c3c;
-        cursor: pointer;
-        padding: 0;
-        text-decoration: none;
-        font-family: inherit;
-        font-size: 14px;
-    }
-    .delete-button:hover {
-        color: #c0392b;
-    }
-    .modal-content {
+    
+    .modal-overlay {
         position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 0 30px rgba(0,0,0,0.25);
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0);
         z-index: 1000;
-        width: 80vw;
-        max-width: 800px;
-        height: auto;
-        min-height: 45vh;
-        max-height: 90vh;
         display: flex;
-        flex-direction: column;
-    }
-    .modal-content > div {
-        flex: 1;
+        align-items: center;
+        justify-content: center;
         padding: 20px;
-        margin: 15px 0;
-        background: #f8f9fa;
-        border-radius: 8px;
-        font-size: 16px;
-        line-height: 1.6;
+    }
+    
+    .modal-content {
+        background: var(--bg-color);
+        padding: 20px;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 500px;
+        max-height: 80vh;
         overflow-y: auto;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 10px 10px 20px var(--dark-shadow), 
+                    -10px -10px 20px var(--light-shadow);
+        position: relative;
     }
-    .modal-content h3 {
-        color: #2c3e50;
-        font-size: 20px;
-        margin: 0 0 20px 0;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #3498db;
+    
+    .modal-header {
+        color: var(--primary-color);
+        font-size: 18px;
+        margin: 0 0 15px 0;
+        font-weight: 700;
+        text-align: center;
     }
-    .modal-content span[onclick] {
-        background: #3498db;
+    
+    .modal-body {
+        background: var(--bg-color);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 15px;
+        box-shadow: inset 3px 3px 6px var(--dark-shadow), 
+                    inset -3px -3px 6px var(--light-shadow);
+        font-size: 14px;
+        line-height: 1.6;
+        max-height: 50vh;
+        overflow-y: auto;
+    }
+    
+    .modal-close {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background: var(--primary-color);
         color: white;
-        padding: 8px 25px;
-        border-radius: 25px;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 14px;
         cursor: pointer;
-        transition: all 0.3s;
-        align-self: flex-end;
-        margin-top: 15px;
+        text-align: center;
+        box-shadow: 4px 4px 8px var(--dark-shadow), 
+                    -4px -4px 8px var(--light-shadow);
     }
-    .modal-content span[onclick]:hover {
-        background: #2980b9;
-        transform: translateY(-1px);
-        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    
+    .modal-close:active {
+        box-shadow: inset 4px 4px 8px rgba(0,0,0,0.2);
     }
-    @media (max-width: 600px) {
-        .add-form {
-            flex-direction: column;
+    
+    /* 删除确认对话框样式 */
+    .delete-confirm {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0);
+        z-index: 1001;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .delete-confirm-content {
+        background: var(--bg-color);
+        padding: 25px;
+        border-radius: 20px;
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 10px 10px 20px var(--dark-shadow), 
+                    -10px -10px 20px var(--light-shadow);
+    }
+    
+    .delete-confirm-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .delete-confirm-buttons button {
+        flex: 1;
+    }
+    
+    .delete-confirm-buttons button:first-child {
+        background-color: var(--danger-color);
+        color: white;
+    }
+    
+    /* 小屏幕优化 - 进一步调整表格布局 */
+    @media (max-width: 360px) {
+        body {
+            padding: 8px;
+            font-size: 13px;
         }
-        .input-group {
-            width: 100%;
+        
+        h1 {
+            font-size: 1.4rem;
+        }
+        
+        .section-container {
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        
+        input[type="date"], input[type="text"], input[type="number"] {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+        
+        button {
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+        
+        th, td {
+            padding: 8px 4px;
+            font-size: 12px;
+        }
+        
+        /* 进一步调整列宽以适应小屏幕 */
+        th:nth-child(1), td:nth-child(1) { /* 日期列 */
+            width: 20%;
+            min-width: 60px;
+        }
+        
+        th:nth-child(2), td:nth-child(2) { /* 工作内容列 */
+            width: 30%;
+            min-width: 80px;
+            max-width: 100px;
+            padding-left: 6px;
+            padding-right: 6px;
+        }
+        
+        th:nth-child(3), td:nth-child(3) { /* 工时列 */
+            width: 15%;
+            min-width: 40px;
+        }
+        
+        th:nth-child(4), td:nth-child(4) { /* 工资列 */
+            width: 20%;
+            min-width: 60px;
+        }
+        
+        th:nth-child(5), td:nth-child(5) { /* 操作列 */
+            width: 15%;
+            min-width: 60px;
+        }
+        
+        .action-btn {
+            padding: 4px 6px;
+            font-size: 10px;
+            margin: 1px;
+        }
+        
+        .summary-card {
+            padding: 12px;
+        }
+        
+        .summary-card h3 {
+            font-size: 15px;
+        }
+        
+        .summary-label, .summary-value {
+            font-size: 13px;
+        }
+    }
+    
+    /* 横屏模式优化 */
+    @media (max-height: 500px) and (orientation: landscape) {
+        .section-container {
+            padding: 10px;
             margin-bottom: 10px;
         }
-        button {
+        
+        .add-form {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        
+        .input-row {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .button-group {
             width: 100%;
+        }
+        
+        .summary-container {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        
+        .summary-card {
+            flex: 1;
+            min-width: 200px;
+        }
+    }
+    
+    /* 超小屏幕优化 - 简化表格显示 */
+    @media (max-width: 320px) {
+        th:nth-child(2), td:nth-child(2) { /* 工作内容列 */
+            display: none; /* 在超小屏幕上隐藏工作内容列 */
+        }
+        
+        th:nth-child(1), td:nth-child(1) {
+            width: 25%;
+        }
+        
+        th:nth-child(3), td:nth-child(3) {
+            width: 20%;
+        }
+        
+        th:nth-child(4), td:nth-child(4) {
+            width: 30%;
+        }
+        
+        th:nth-child(5), td:nth-child(5) {
+            width: 25%;
+        }
+    }
+    
+    /* 防止iOS输入框缩放 */
+    @supports (-webkit-overflow-scrolling: touch) {
+        input, textarea {
+            font-size: 16px !important;
         }
     }
 </style>
@@ -215,70 +606,86 @@
     <h1>工作日记</h1>
     <div class="toast" id="toast"></div>
 
-    <div class="add-form">
-        <div class="input-group">
-            <input type="date" id="date-input" required title="请点击选择工作日期" onfocus="this.showPicker()">
-            <input type="text" id="content-input" placeholder="请输入工作内容（可不写）" title="请详细填写工作内容">
-            <input type="number" id="hours-input" min="0" step="0.5" placeholder="请输入工时" title="按天计算（1天=8小时）" required>
-            <input type="number" id="wage-input" min="0" step="100" placeholder="请输入工资（元）" title="请输入当日约定工资" required>
+    <div class="section-container">
+        <div class="add-form">
+            <div class="input-row">
+                <input type="date" id="date-input" required title="请点击选择工作日期" onfocus="this.showPicker()">
+                <input type="text" id="content-input" placeholder="工作内容：今天做了什么（选填）" title="请详细填写工作内容">
+                <input type="number" id="hours-input" min="0" step="0.5" placeholder="工时（天）" title="按天计算（1天=8小时）" required>
+                <input type="number" id="wage-input" min="0" step="100" placeholder="日工资（元）" title="请输入当日约定工资" required>
+            </div>
+            
+            <!-- 修改这里：为添加记录按钮添加class -->
+            <button class="add-button" onclick="addWorkLog()">添加记录</button>
+            
+            <div class="button-group">
+                <button onclick="exportData()">导出数据</button>
+                <button onclick="importData()">导入数据</button>
+            </div>
         </div>
-        <button onclick="addWorkLog()">添加记录</button>
     </div>
 
-    <div style="margin-bottom: 10px; display: flex; justify-content: space-between;">
-        <button style="flex: 1; margin-right: 20px; margin-left: 20px;" onclick="exportData()">导出数据</button>
-        <button style="flex: 1; margin-left: 20px; margin-right: 20px;" onclick="importData()">导入数据</button>
-    </div>
-
-    <table id="worklog">
-        <thead>
-            <tr>
-                <th>日期</th>
-                <th>备注</th>
-                <th>工时</th>
-                <th>工资</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
-
-    <div class="monthly-hours" id="monthly-hours">
-        <table>
+    <div class="section-container">
+        <table id="worklog">
             <thead>
                 <tr>
-                    <th>月份</th>
+                    <th>日期</th>
+                    <th>工作内容</th>
                     <th>工时</th>
                     <th>工资</th>
+                    <th>操作</th>
                 </tr>
             </thead>
-            <tbody id="monthly-hours-tbody"></tbody>
+            <tbody>
+                <!-- 数据行将通过JS动态生成 -->
+            </tbody>
         </table>
     </div>
 
-    <div class="total-hours" id="total-hours">
-        <table>
-            <tr>
-                <th>总工时</th>
-                <th>总工资</th>
-            </tr>
-            <tr>
-                <td id="total-hours-value"></td>
-                <td id="total-wage-value"></td>
-            </tr>
-        </table>
+    <div class="summary-container">
+        <div class="summary-card">
+            <h3>月度统计</h3>
+            <div id="monthly-hours">
+                <!-- 月度数据将通过JS动态生成 -->
+            </div>
+        </div>
+        
+        <div class="summary-card">
+            <h3>总计</h3>
+            <div class="summary-row">
+                <span class="summary-label">总工时：</span>
+                <span class="summary-value" id="total-hours-value">0 天</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">总工资：</span>
+                <span class="summary-value" id="total-wage-value">0 元</span>
+            </div>
+        </div>
     </div>
 
     <button id="scroll-button" onclick="toggleScroll()">↑</button>
+    
+    <!-- 删除确认对话框 -->
+    <div class="delete-confirm" id="delete-confirm">
+        <div class="delete-confirm-content">
+            <h3>确认删除</h3>
+            <p>确定要删除这条记录吗？此操作无法撤销。</p>
+            <div class="delete-confirm-buttons">
+                <button onclick="confirmDelete()">确认删除</button>
+                <button onclick="cancelDelete()">取消</button>
+            </div>
+        </div>
+    </div>
 <script>
     let workLogs = JSON.parse(localStorage.getItem('workLogs')) || [];
-    workLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
-    let lastWage = parseFloat(localStorage.getItem('lastWage')) || 0;
-    let lastHours = parseFloat(localStorage.getItem('lastHours')) || 0;
+    let lastWage = parseFloat(localStorage.getItem('lastWage')) || 300;
+    let lastHours = parseFloat(localStorage.getItem('lastHours')) || 1;
+    let deleteIndex = -1;
 
-    const monthColors = Array.from({length:12}, (_,i) => 
-        `hsl(${(i * 30)}, 60%, 90%)`);
+    // 自动整理日期：按日期降序排序（最新日期在最前）
+    function sortWorkLogs() {
+        workLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
 
     function setDefaultDate() {
         const today = new Date();
@@ -289,39 +696,63 @@
     }
 
     function renderTable() {
+        // 先整理日期，确保按日期顺序排列
+        sortWorkLogs();
+        
         const tbody = document.getElementById('worklog').getElementsByTagName('tbody')[0];
         tbody.innerHTML = '';
 
+        if (workLogs.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td colspan="5" style="padding: 30px 10px; color: #666; text-align: center;">
+                    暂无记录，请添加第一条工作记录
+                </td>
+            `;
+            tbody.appendChild(row);
+            return;
+        }
+
         workLogs.forEach((log, index) => {
             const row = document.createElement('tr');
-            const month = new Date(log.date).getMonth();
+            const date = new Date(log.date);
+            const month = date.getMonth();
+            const monthColors = [
+                '#FFEBEE', '#F3E5F5', '#E8EAF6', '#E3F2FD', 
+                '#E0F2F1', '#E8F5E8', '#FFF3E0', '#FBE9E7',
+                '#EFEBE9', '#FAFAFA', '#ECEFF1', '#FFF8E1'
+            ];
             row.style.backgroundColor = monthColors[month];
+            
+            // 工作内容摘要（显示更简短的预览）
+            const contentPreview = log.content ? 
+                (log.content.length > 8 ? log.content.substring(0, 8) + '...' : log.content) : 
+                '无';
             
             row.innerHTML = `
                 <td>${formatDate(log.date)}</td>
+                <td title="${log.content || '无'}">${contentPreview}</td>
+                <td>${log.hours}天</td>
+                <td>${(log.hours * log.wage).toFixed(2)}元</td>
                 <td>
-                    ${log.content ? 
-                        `<span class="content-button" onclick="showContent(${index})">详情</span>` 
-                        : ''}
-                </td>
-                <td>${log.hours}</td>
-                <td>${(log.hours * log.wage).toFixed(2)}</td>
-                <td>
-                    <span class="delete-button" onclick="deleteLog(${index})">删除</span>
+                    <div class="table-actions">
+                        ${log.content ? `<button class="action-btn view-btn" onclick="showContent(${index})">查看</button>` : ''}
+                        <button class="action-btn delete-btn" onclick="showDeleteConfirm(${index})">删除</button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(row);
         });
 
-        updateTotalHours();
+        updateSummary();
+        updateScrollButton(); // 更新滚动按钮状态
     }
 
     function formatDate(dateString) {
-        return new Date(dateString).toLocaleDateString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
+        const date = new Date(dateString);
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${month}/${day}`;
     }
 
     function addWorkLog() {
@@ -330,19 +761,30 @@
         const hours = parseFloat(document.getElementById('hours-input').value);
         const wage = parseFloat(document.getElementById('wage-input').value);
 
-        if (workLogs.some(log => log.date === date)) {
-            showToast("请勿重复添加！");
+        if (!date) {
+            showToast("请选择日期！");
             return;
         }
 
         if (hours < 0 || isNaN(hours)) {
-            alert('请输入有效的工时数值（≥0）');
+            showToast("请输入有效的工时数值（≥0）");
             return;
         }
 
         if (wage < 0 || isNaN(wage)) {
-            alert('请输入有效的工资数值（≥0）');
+            showToast("请输入有效的工资数值（≥0）");
             return;
+        }
+
+        // 检查是否已存在相同日期的记录
+        const existingIndex = workLogs.findIndex(log => log.date === date);
+        if (existingIndex !== -1) {
+            if (confirm('该日期已有记录，是否覆盖？')) {
+                workLogs.splice(existingIndex, 1);
+            } else {
+                showToast("已取消添加");
+                return;
+            }
         }
 
         lastHours = hours;
@@ -351,7 +793,9 @@
         localStorage.setItem('lastWage', wage);
 
         workLogs.push({ date, content, hours, wage });
-        workLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        // 自动整理日期
+        sortWorkLogs();
         localStorage.setItem('workLogs', JSON.stringify(workLogs));
         
         renderTable();
@@ -375,40 +819,60 @@
         document.getElementById('wage-input').value = lastWage;
     }
 
-    function deleteLog(index) {
-        if (confirm('确定要删除这条记录吗？')) {
-            workLogs.splice(index, 1);
-            workLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+    // 显示删除确认对话框
+    function showDeleteConfirm(index) {
+        deleteIndex = index;
+        const deleteConfirm = document.getElementById('delete-confirm');
+        deleteConfirm.style.display = 'flex';
+    }
+
+    // 确认删除
+    function confirmDelete() {
+        if (deleteIndex >= 0 && deleteIndex < workLogs.length) {
+            workLogs.splice(deleteIndex, 1);
+            // 自动整理日期
+            sortWorkLogs();
             localStorage.setItem('workLogs', JSON.stringify(workLogs));
             renderTable();
+            showToast('记录已删除');
         }
+        cancelDelete();
+    }
+
+    // 取消删除
+    function cancelDelete() {
+        deleteIndex = -1;
+        const deleteConfirm = document.getElementById('delete-confirm');
+        deleteConfirm.style.display = 'none';
     }
 
     function showContent(index) {
-        const content = workLogs[index].content;
-        if (!content) return;
+        const log = workLogs[index];
+        if (!log.content) return;
 
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
-        overlay.onclick = () => overlay.remove();
+        overlay.onclick = (e) => {
+            if (e.target === overlay) overlay.remove();
+        };
 
         const modal = document.createElement('div');
         modal.className = 'modal-content';
         modal.innerHTML = `
-            <h3>${formatDate(workLogs[index].date)} 工作内容详情</h3>
-            <div>
-                ${content.replace(/\n/g, '<br>')}
+            <h3 class="modal-header">${new Date(log.date).toLocaleDateString('zh-CN')} 工作详情</h3>
+            <div class="modal-body">
+                ${log.content.replace(/\n/g, '<br>')}
             </div>
-            <span onclick="this.parentElement.parentElement.remove()">
+            <button class="modal-close" onclick="this.parentElement.parentElement.remove()">
                 关闭
-            </span>
+            </button>
         `;
 
         overlay.appendChild(modal);
         document.body.appendChild(overlay);
     }
 
-    function updateTotalHours() {
+    function updateSummary() {
         const totalHours = workLogs.reduce((sum, log) => sum + log.hours, 0);
         const totalWage = workLogs.reduce((sum, log) => sum + (log.hours * log.wage), 0);
         
@@ -428,30 +892,83 @@
             monthlyData[month].wage += log.hours * log.wage;
         });
 
-        const monthlyTbody = document.getElementById('monthly-hours-tbody');
-        monthlyTbody.innerHTML = '';
+        const monthlyContainer = document.getElementById('monthly-hours');
+        monthlyContainer.innerHTML = '';
 
-        Object.entries(monthlyData).forEach(([month, data]) => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${month}</td>
-                <td>${data.hours.toFixed(1)} 天</td>
-                <td>${data.wage.toFixed(2)} 元</td>
-            `;
-            monthlyTbody.appendChild(row);
-        });
+        if (Object.keys(monthlyData).length === 0) {
+            monthlyContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无月度数据</div>';
+            return;
+        }
+
+        Object.entries(monthlyData)
+            .sort((a, b) => b[0].localeCompare(a[0]))
+            .forEach(([month, data]) => {
+                const row = document.createElement('div');
+                row.className = 'summary-row';
+                row.innerHTML = `
+                    <span class="summary-label">${month}</span>
+                    <span class="summary-value">${data.hours.toFixed(1)}天 / ${data.wage.toFixed(2)}元</span>
+                `;
+                monthlyContainer.appendChild(row);
+            });
     }
 
+    // 更新滚动按钮显示状态
+    function updateScrollButton() {
+        const scrollButton = document.getElementById('scroll-button');
+        
+        // 如果页面内容不足以滚动，隐藏按钮
+        const pageHeight = document.documentElement.scrollHeight;
+        const viewportHeight = window.innerHeight;
+        
+        if (pageHeight <= viewportHeight + 50) {
+            scrollButton.style.display = 'none';
+            return;
+        }
+        
+        scrollButton.style.display = 'flex';
+        
+        // 获取当前滚动位置
+        const scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop;
+        
+        // 如果接近底部，显示向上箭头，否则显示向下箭头
+        const isAtBottom = (scrollTop + viewportHeight) >= (pageHeight - 50);
+        
+        scrollButton.textContent = isAtBottom ? '↑' : '↓';
+        scrollButton.setAttribute('data-direction', isAtBottom ? 'up' : 'down');
+    }
+
+    // 切换滚动位置
     function toggleScroll() {
         const scrollButton = document.getElementById('scroll-button');
-        const isAtBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 50;
-
-        if (isAtBottom) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            scrollButton.textContent = '↓';
+        const direction = scrollButton.getAttribute('data-direction') || 'down';
+        
+        if (direction === 'down') {
+            // 滚动到底部
+            const targetPosition = document.documentElement.scrollHeight - window.innerHeight;
+            
+            window.scrollTo({
+                top: targetPosition,
+                behavior: 'smooth'
+            });
+            
+            // 更新按钮状态
+            setTimeout(() => {
+                scrollButton.textContent = '↑';
+                scrollButton.setAttribute('data-direction', 'up');
+            }, 300);
         } else {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-            scrollButton.textContent = '↑';
+            // 滚动到顶部
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+            
+            // 更新按钮状态
+            setTimeout(() => {
+                scrollButton.textContent = '↓';
+                scrollButton.setAttribute('data-direction', 'down');
+            }, 300);
         }
     }
 
@@ -468,27 +985,23 @@
 
         const a = document.createElement('a');
         a.href = url;
-        a.download = `worklog_backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.download = `工作记录_${new Date().toISOString().split('T')[0]}.json`;
+        
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 100);
 
-        if (navigator.msSaveBlob) {
-            navigator.msSaveBlob(blob, a.download);
-        } else {
-            a.click();
-            setTimeout(() => {
-                URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            }, 100);
-        }
-
-        if (typeof navigator !== 'undefined' && navigator.userAgent.indexOf('MSIE') !== -1) {
-            window.location.href = url;
-        }
+        showToast('数据已导出');
     }
 
     function importData() {
         const input = document.createElement('input');
         input.type = 'file';
-        input.accept = '.json';
+        input.accept = '.json,application/json';
         
         input.onchange = function(event) {
             const file = event.target.files[0];
@@ -499,48 +1012,87 @@
                 try {
                     const importedData = JSON.parse(e.target.result);
                     
-                    workLogs = importedData.workLogs || [];
-                    lastWage = importedData.lastWage || 0;
-                    lastHours = importedData.lastHours || 0;
+                    if (!importedData.workLogs || !Array.isArray(importedData.workLogs)) {
+                        throw new Error('无效的数据格式');
+                    }
+                    
+                    workLogs = importedData.workLogs;
+                    lastWage = importedData.lastWage || 300;
+                    lastHours = importedData.lastHours || 1;
 
+                    // 导入后自动整理日期
+                    sortWorkLogs();
                     localStorage.setItem('workLogs', JSON.stringify(workLogs));
                     localStorage.setItem('lastWage', lastWage);
                     localStorage.setItem('lastHours', lastHours);
 
                     renderTable();
-                    
-                    showToast('数据导入成功！');
+                    showToast('数据导入成功！已自动整理日期顺序。');
                 } catch (error) {
-                    alert('导入失败，请检查文件格式是否正确！');
+                    showToast('导入失败，请检查文件格式');
+                    console.error('导入错误:', error);
                 }
             };
             reader.readAsText(file);
         };
+        
         input.click();
     }
 
+    // 初始化页面
     window.onload = () => {
         setDefaultDate();
-
-        const initNumberInput = (elem, storedValue) => {
-            elem.value = storedValue > 0 ? storedValue : '';
-            elem.dataset.originalPlaceholder = elem.placeholder;
-
-            elem.onfocus = () => { 
-                if(elem.value === '') elem.placeholder = '请输入数值'; 
-            }
-            elem.onblur = () => { 
-                if(elem.value === '') elem.placeholder = elem.dataset.originalPlaceholder;
-            }
-        }
-
-        initNumberInput(document.getElementById('hours-input'), lastHours);
-        initNumberInput(document.getElementById('wage-input'), lastWage);
         
+        document.getElementById('hours-input').value = lastHours;
+        document.getElementById('wage-input').value = lastWage;
+        
+        const inputs = document.querySelectorAll('input[type="date"], input[type="text"], input[type="number"]');
+        inputs.forEach(input => {
+            const originalPlaceholder = input.placeholder;
+            
+            input.addEventListener('focus', () => {
+                input.placeholder = '';
+            });
+            
+            input.addEventListener('blur', () => {
+                input.placeholder = originalPlaceholder;
+            });
+        });
+        
+        // 初始时整理日期
+        sortWorkLogs();
         renderTable();
+        
+        // 初始化滚动按钮状态
+        updateScrollButton();
+        
+        // 监听滚动事件，实时更新按钮状态
+        window.addEventListener('scroll', updateScrollButton);
+        
+        // 页面大小改变时也更新按钮状态
+        window.addEventListener('resize', updateScrollButton);
     };
 
-    window.addEventListener('focus', setDefaultDate);
+    // 页面获取焦点时更新日期
+    window.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            setDefaultDate();
+        }
+    });
+
+    // 点击删除确认对话框外部关闭对话框
+    document.getElementById('delete-confirm').addEventListener('click', function(e) {
+        if (e.target === this) {
+            cancelDelete();
+        }
+    });
+
+    // 添加键盘支持：ESC键关闭删除确认对话框
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            cancelDelete();
+        }
+    });
 </script>
 </body>
 </html>
