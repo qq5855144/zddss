@@ -41,6 +41,7 @@
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         margin: 0;
+        padding-bottom: 70px; /* 为底部工具栏留出空间 */
     }
     
     h1 {
@@ -76,6 +77,26 @@
         from {
             opacity: 0;
             transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .page {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .page.active {
+        display: block;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
         }
         to {
             opacity: 1;
@@ -286,7 +307,6 @@
         display: flex;
         flex-direction: column;
         gap: 15px;
-        margin-bottom: 70px;
     }
     
     .summary-card {
@@ -330,25 +350,56 @@
         font-size: 14px;
     }
     
-    #scroll-button {
+    /* 底部工具栏样式 */
+    .bottom-nav {
         position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 45px;
-        height: 45px;
-        padding: 0;
-        font-size: 18px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 4px 4px 8px var(--dark-shadow), 
-                    -4px -4px 8px var(--light-shadow);
-        z-index: 100;
-        border: none;
+        bottom: 0;
+        left: 0;
+        right: 0;
         background-color: var(--bg-color);
-        color: var(--primary-color);
+        padding: 10px;
+        display: flex;
+        justify-content: space-around;
+        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+        z-index: 100;
+        border-top: 1px solid rgba(163, 177, 198, 0.3);
+    }
+    
+    .nav-button {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 12px;
+        border: none;
+        background: transparent;
+        color: var(--text-color);
+        font-size: 12px;
         cursor: pointer;
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        min-width: 70px;
+    }
+    
+    .nav-button i {
+        font-size: 20px;
+        margin-bottom: 4px;
+    }
+    
+    .nav-button.active {
+        color: var(--primary-color);
+        background-color: var(--bg-color);
+        box-shadow: inset 3px 3px 6px var(--dark-shadow), 
+                    inset -3px -3px 6px var(--light-shadow);
+        font-weight: 700;
+    }
+    
+    .nav-button:active:not(.active) {
+        transform: translateY(2px);
+    }
+    
+    /* 隐藏原来的滚动按钮，因为现在有底部导航 */
+    #scroll-button {
+        display: none !important;
     }
     
     .modal-overlay {
@@ -465,6 +516,7 @@
         body {
             padding: 8px;
             font-size: 13px;
+            padding-bottom: 60px; /* 调整底部空间 */
         }
         
         h1 {
@@ -537,6 +589,20 @@
         .summary-label, .summary-value {
             font-size: 13px;
         }
+        
+        .bottom-nav {
+            padding: 8px;
+        }
+        
+        .nav-button {
+            padding: 6px 8px;
+            font-size: 11px;
+            min-width: 60px;
+        }
+        
+        .nav-button i {
+            font-size: 18px;
+        }
     }
     
     /* 横屏模式优化 */
@@ -569,6 +635,14 @@
             flex: 1;
             min-width: 200px;
         }
+        
+        .bottom-nav {
+            padding: 5px 10px;
+        }
+        
+        .nav-button {
+            padding: 4px 8px;
+        }
     }
     
     /* 超小屏幕优化 - 简化表格显示 */
@@ -592,6 +666,20 @@
         th:nth-child(5), td:nth-child(5) {
             width: 25%;
         }
+        
+        .bottom-nav {
+            padding: 6px;
+        }
+        
+        .nav-button {
+            min-width: 50px;
+            padding: 4px 6px;
+            font-size: 10px;
+        }
+        
+        .nav-button i {
+            font-size: 16px;
+        }
     }
     
     /* 防止iOS输入框缩放 */
@@ -606,64 +694,87 @@
     <h1>工作日记</h1>
     <div class="toast" id="toast"></div>
 
-    <div class="section-container">
-        <div class="add-form">
-            <div class="input-row">
-                <input type="date" id="date-input" required title="请点击选择工作日期" onfocus="this.showPicker()">
-                <input type="text" id="content-input" placeholder="工作内容：今天做了什么（选填）" title="请详细填写工作内容">
-                <input type="number" id="hours-input" min="0" step="0.5" placeholder="工时（天）" title="按天计算（1天=8小时）" required>
-                <input type="number" id="wage-input" min="0" step="100" placeholder="日工资（元）" title="请输入当日约定工资" required>
+    <!-- 添加页 -->
+    <div id="add-page" class="page active">
+        <div class="section-container">
+            <div class="add-form">
+                <div class="input-row">
+                    <input type="date" id="date-input" required title="请点击选择工作日期" onfocus="this.showPicker()">
+                    <input type="text" id="content-input" placeholder="工作内容：今天做了什么（选填）" title="请详细填写工作内容">
+                    <input type="number" id="hours-input" min="0" step="0.5" placeholder="工时（天）" title="按天计算（1天=8小时）" required>
+                    <input type="number" id="wage-input" min="0" step="100" placeholder="日工资（元）" title="请输入当日约定工资" required>
+                </div>
+                
+                <!-- 修改这里：为添加记录按钮添加class -->
+                <button class="add-button" onclick="addWorkLog()">添加记录</button>
+                
+                <div class="button-group">
+                    <button onclick="exportData()">导出数据</button>
+                    <button onclick="importData()">导入数据</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 表格页 -->
+    <div id="table-page" class="page">
+        <div class="section-container">
+            <table id="worklog">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>工作内容</th>
+                        <th>工时</th>
+                        <th>工资</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据行将通过JS动态生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 统计页 -->
+    <div id="summary-page" class="page">
+        <div class="summary-container">
+            <div class="summary-card">
+                <h3>月度统计</h3>
+                <div id="monthly-hours">
+                    <!-- 月度数据将通过JS动态生成 -->
+                </div>
             </div>
             
-            <!-- 修改这里：为添加记录按钮添加class -->
-            <button class="add-button" onclick="addWorkLog()">添加记录</button>
-            
-            <div class="button-group">
-                <button onclick="exportData()">导出数据</button>
-                <button onclick="importData()">导入数据</button>
+            <div class="summary-card">
+                <h3>总计</h3>
+                <div class="summary-row">
+                    <span class="summary-label">总工时：</span>
+                    <span class="summary-value" id="total-hours-value">0 天</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">总工资：</span>
+                    <span class="summary-value" id="total-wage-value">0 元</span>
+                </div>
             </div>
         </div>
     </div>
-
-    <div class="section-container">
-        <table id="worklog">
-            <thead>
-                <tr>
-                    <th>日期</th>
-                    <th>工作内容</th>
-                    <th>工时</th>
-                    <th>工资</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- 数据行将通过JS动态生成 -->
-            </tbody>
-        </table>
+    
+    <!-- 底部工具栏 -->
+    <div class="bottom-nav">
+        <button class="nav-button active" onclick="switchPage('add-page')">
+            <i>➕</i>
+            <span>添加</span>
+        </button>
+        <button class="nav-button" onclick="switchPage('table-page')">
+            <i>📋</i>
+            <span>记录</span>
+        </button>
+        <button class="nav-button" onclick="switchPage('summary-page')">
+            <i>📊</i>
+            <span>统计</span>
+        </button>
     </div>
-
-    <div class="summary-container">
-        <div class="summary-card">
-            <h3>月度统计</h3>
-            <div id="monthly-hours">
-                <!-- 月度数据将通过JS动态生成 -->
-            </div>
-        </div>
-        
-        <div class="summary-card">
-            <h3>总计</h3>
-            <div class="summary-row">
-                <span class="summary-label">总工时：</span>
-                <span class="summary-value" id="total-hours-value">0 天</span>
-            </div>
-            <div class="summary-row">
-                <span class="summary-label">总工资：</span>
-                <span class="summary-value" id="total-wage-value">0 元</span>
-            </div>
-        </div>
-    </div>
-
-    <button id="scroll-button" onclick="toggleScroll()">↑</button>
     
     <!-- 删除确认对话框 -->
     <div class="delete-confirm" id="delete-confirm">
@@ -745,7 +856,6 @@
         });
 
         updateSummary();
-        updateScrollButton(); // 更新滚动按钮状态
     }
 
     function formatDate(dateString) {
@@ -801,6 +911,11 @@
         renderTable();
         clearForm();
         showToast('记录添加成功！');
+        
+        // 添加成功后自动切换到表格页
+        setTimeout(() => {
+            switchPage('table-page');
+        }, 500);
     }
 
     function showToast(message) {
@@ -913,63 +1028,39 @@
             });
     }
 
-    // 更新滚动按钮显示状态
-    function updateScrollButton() {
-        const scrollButton = document.getElementById('scroll-button');
+    // 页面切换功能
+    function switchPage(pageId) {
+        // 隐藏所有页面
+        const pages = document.querySelectorAll('.page');
+        pages.forEach(page => {
+            page.classList.remove('active');
+        });
         
-        // 如果页面内容不足以滚动，隐藏按钮
-        const pageHeight = document.documentElement.scrollHeight;
-        const viewportHeight = window.innerHeight;
-        
-        if (pageHeight <= viewportHeight + 50) {
-            scrollButton.style.display = 'none';
-            return;
+        // 显示选中的页面
+        const activePage = document.getElementById(pageId);
+        if (activePage) {
+            activePage.classList.add('active');
+            
+            // 如果是表格页或统计页，更新内容
+            if (pageId === 'table-page') {
+                renderTable();
+            } else if (pageId === 'summary-page') {
+                updateSummary();
+            }
         }
         
-        scrollButton.style.display = 'flex';
+        // 更新底部导航按钮状态
+        const navButtons = document.querySelectorAll('.nav-button');
+        navButtons.forEach(button => {
+            if (button.getAttribute('onclick') === `switchPage('${pageId}')`) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
         
-        // 获取当前滚动位置
-        const scrollTop = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop;
-        
-        // 如果接近底部，显示向上箭头，否则显示向下箭头
-        const isAtBottom = (scrollTop + viewportHeight) >= (pageHeight - 50);
-        
-        scrollButton.textContent = isAtBottom ? '↑' : '↓';
-        scrollButton.setAttribute('data-direction', isAtBottom ? 'up' : 'down');
-    }
-
-    // 切换滚动位置
-    function toggleScroll() {
-        const scrollButton = document.getElementById('scroll-button');
-        const direction = scrollButton.getAttribute('data-direction') || 'down';
-        
-        if (direction === 'down') {
-            // 滚动到底部
-            const targetPosition = document.documentElement.scrollHeight - window.innerHeight;
-            
-            window.scrollTo({
-                top: targetPosition,
-                behavior: 'smooth'
-            });
-            
-            // 更新按钮状态
-            setTimeout(() => {
-                scrollButton.textContent = '↑';
-                scrollButton.setAttribute('data-direction', 'up');
-            }, 300);
-        } else {
-            // 滚动到顶部
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
-            
-            // 更新按钮状态
-            setTimeout(() => {
-                scrollButton.textContent = '↓';
-                scrollButton.setAttribute('data-direction', 'down');
-            }, 300);
-        }
+        // 滚动到页面顶部
+        window.scrollTo(0, 0);
     }
 
     function exportData() {
@@ -1027,7 +1118,13 @@
                     localStorage.setItem('lastHours', lastHours);
 
                     renderTable();
+                    updateSummary();
                     showToast('数据导入成功！已自动整理日期顺序。');
+                    
+                    // 导入成功后自动切换到表格页
+                    setTimeout(() => {
+                        switchPage('table-page');
+                    }, 500);
                 } catch (error) {
                     showToast('导入失败，请检查文件格式');
                     console.error('导入错误:', error);
@@ -1062,15 +1159,10 @@
         // 初始时整理日期
         sortWorkLogs();
         renderTable();
+        updateSummary();
         
-        // 初始化滚动按钮状态
-        updateScrollButton();
-        
-        // 监听滚动事件，实时更新按钮状态
-        window.addEventListener('scroll', updateScrollButton);
-        
-        // 页面大小改变时也更新按钮状态
-        window.addEventListener('resize', updateScrollButton);
+        // 默认显示添加页
+        switchPage('add-page');
     };
 
     // 页面获取焦点时更新日期
