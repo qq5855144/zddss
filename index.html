@@ -150,11 +150,13 @@
         display: flex;
         gap: 10px;
         margin-top: 10px;
+        flex-wrap: wrap;
     }
     
     .button-group button {
         flex: 1;
         margin: 0;
+        min-width: 100px;
     }
     
     button {
@@ -711,6 +713,7 @@
                 <div class="button-group">
                     <button onclick="exportData()">导出数据</button>
                     <button onclick="importData()">导入数据</button>
+                    <button onclick="showDeleteAllConfirm()" style="color: var(--danger-color);">删除数据</button>
                 </div>
             </div>
         </div>
@@ -784,6 +787,18 @@
             <div class="delete-confirm-buttons">
                 <button onclick="confirmDelete()">确认删除</button>
                 <button onclick="cancelDelete()">取消</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 删除所有数据确认对话框 -->
+    <div class="delete-confirm" id="delete-all-confirm">
+        <div class="delete-confirm-content">
+            <h3>确认删除所有数据</h3>
+            <p>确定要删除所有工作记录吗？此操作无法撤销。</p>
+            <div class="delete-confirm-buttons">
+                <button onclick="confirmDeleteAll()">确认删除</button>
+                <button onclick="cancelDeleteAll()">取消</button>
             </div>
         </div>
     </div>
@@ -959,6 +974,42 @@
         deleteIndex = -1;
         const deleteConfirm = document.getElementById('delete-confirm');
         deleteConfirm.style.display = 'none';
+    }
+
+    // 显示删除所有数据确认对话框
+    function showDeleteAllConfirm() {
+        const deleteAllConfirm = document.getElementById('delete-all-confirm');
+        deleteAllConfirm.style.display = 'flex';
+    }
+
+    // 确认删除所有数据
+    function confirmDeleteAll() {
+        workLogs = [];
+        localStorage.removeItem('workLogs');
+        localStorage.removeItem('lastWage');
+        localStorage.removeItem('lastHours');
+        lastWage = 300;
+        lastHours = 1;
+        
+        // 更新表单默认值
+        document.getElementById('hours-input').value = lastHours;
+        document.getElementById('wage-input').value = lastWage;
+        
+        renderTable();
+        updateSummary();
+        showToast('所有数据已删除');
+        cancelDeleteAll();
+        
+        // 删除成功后自动切换到表格页
+        setTimeout(() => {
+            switchPage('table-page');
+        }, 500);
+    }
+
+    // 取消删除所有数据
+    function cancelDeleteAll() {
+        const deleteAllConfirm = document.getElementById('delete-all-confirm');
+        deleteAllConfirm.style.display = 'none';
     }
 
     function showContent(index) {
@@ -1178,11 +1229,19 @@
             cancelDelete();
         }
     });
+    
+    // 点击删除所有数据确认对话框外部关闭对话框
+    document.getElementById('delete-all-confirm').addEventListener('click', function(e) {
+        if (e.target === this) {
+            cancelDeleteAll();
+        }
+    });
 
     // 添加键盘支持：ESC键关闭删除确认对话框
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             cancelDelete();
+            cancelDeleteAll();
         }
     });
 </script>
