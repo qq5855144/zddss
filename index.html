@@ -702,9 +702,9 @@
             <div class="add-form">
                 <div class="input-row">
                     <input type="date" id="date-input" required title="请点击选择工作日期" onfocus="this.showPicker()">
-                    <input type="text" id="content-input" placeholder="工作内容：今天做了什么（选填）" title="请详细填写工作内容">
-                    <input type="number" id="hours-input" min="0" step="0.5" placeholder="工时（天）" title="按天计算（1天=8小时）" required>
-                    <input type="number" id="wage-input" min="0" step="100" placeholder="日工资（元）" title="请输入当日约定工资" required>
+                    <input type="text" id="content-input" placeholder="工作内容（选填）：今天做了什么" title="请详细填写工作内容">
+                    <input type="number" id="hours-input" min="0" step="0.5" placeholder="请输入工时（天）" title="按天计算（1天=8小时）" required>
+                    <input type="number" id="wage-input" min="0" step="100" placeholder="请输入日工资（元）" title="请输入当日约定工资" required>
                 </div>
                 
                 <!-- 修改这里：为添加记录按钮添加class -->
@@ -804,8 +804,8 @@
     </div>
 <script>
     let workLogs = JSON.parse(localStorage.getItem('workLogs')) || [];
-    let lastWage = parseFloat(localStorage.getItem('lastWage')) || 300;
-    let lastHours = parseFloat(localStorage.getItem('lastHours')) || 1;
+    let lastWage = parseFloat(localStorage.getItem('lastWage')) || null;
+    let lastHours = parseFloat(localStorage.getItem('lastHours')) || null;
     let deleteIndex = -1;
 
     // 自动整理日期：按日期降序排序（最新日期在最前）
@@ -912,6 +912,7 @@
             }
         }
 
+        // 保存最后一次使用的值
         lastHours = hours;
         lastWage = wage;
         localStorage.setItem('lastHours', hours);
@@ -945,8 +946,19 @@
     function clearForm() {
         setDefaultDate();
         document.getElementById('content-input').value = '';
-        document.getElementById('hours-input').value = lastHours;
-        document.getElementById('wage-input').value = lastWage;
+        
+        // 如果有上次使用的值，则使用上次的值，否则留空
+        if (lastHours !== null && !isNaN(lastHours)) {
+            document.getElementById('hours-input').value = lastHours;
+        } else {
+            document.getElementById('hours-input').value = '';
+        }
+        
+        if (lastWage !== null && !isNaN(lastWage)) {
+            document.getElementById('wage-input').value = lastWage;
+        } else {
+            document.getElementById('wage-input').value = '';
+        }
     }
 
     // 显示删除确认对话框
@@ -988,12 +1000,12 @@
         localStorage.removeItem('workLogs');
         localStorage.removeItem('lastWage');
         localStorage.removeItem('lastHours');
-        lastWage = 300;
-        lastHours = 1;
+        lastWage = null;
+        lastHours = null;
         
-        // 更新表单默认值
-        document.getElementById('hours-input').value = lastHours;
-        document.getElementById('wage-input').value = lastWage;
+        // 清空表单
+        document.getElementById('hours-input').value = '';
+        document.getElementById('wage-input').value = '';
         
         renderTable();
         updateSummary();
@@ -1159,15 +1171,24 @@
                     }
                     
                     workLogs = importedData.workLogs;
-                    lastWage = importedData.lastWage || 300;
-                    lastHours = importedData.lastHours || 1;
+                    lastWage = importedData.lastWage || null;
+                    lastHours = importedData.lastHours || null;
 
                     // 导入后自动整理日期
                     sortWorkLogs();
                     localStorage.setItem('workLogs', JSON.stringify(workLogs));
-                    localStorage.setItem('lastWage', lastWage);
-                    localStorage.setItem('lastHours', lastHours);
+                    
+                    if (lastWage !== null) {
+                        localStorage.setItem('lastWage', lastWage);
+                    }
+                    
+                    if (lastHours !== null) {
+                        localStorage.setItem('lastHours', lastHours);
+                    }
 
+                    // 更新表单显示
+                    clearForm();
+                    
                     renderTable();
                     updateSummary();
                     showToast('数据导入成功！已自动整理日期顺序。');
@@ -1191,8 +1212,8 @@
     window.onload = () => {
         setDefaultDate();
         
-        document.getElementById('hours-input').value = lastHours;
-        document.getElementById('wage-input').value = lastWage;
+        // 如果有上次使用的值，则使用上次的值，否则留空
+        clearForm();
         
         const inputs = document.querySelectorAll('input[type="date"], input[type="text"], input[type="number"]');
         inputs.forEach(input => {
