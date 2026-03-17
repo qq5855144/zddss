@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+<title>工作日记</title>
+<style>
+:root{--bg-color:#E0E5EC;--primary-color:#6D5B98;--light-shadow:#FFFFFF;--dark-shadow:#A3B1C6;--text-color:#2D3748;--success-color:#48BB78;--danger-color:#F56565;--card-padding:15px;--card-margin:10px}
+*{box-sizing:border-box}
+html{height:100%;margin:0;padding:0;overflow-x:hidden;position:relative}
+body{font-family:'Microsoft YaHei',sans-serif;padding:10px;width:100%;min-height:100vh;background-color:var(--bg-color);color:var(--text-color);line-height:1.4;font-size:14px;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0;padding-bottom:70px}
+h1{text-align:center;color:var(--primary-color);margin:10px 0 20px 0;font-size:1.8rem;font-weight:700;text-shadow:2px 2px 4px var(--dark-shadow),-2px -2px 4px var(--light-shadow);letter-spacing:0.5px;padding:0 10px}
+.toast{position:fixed;top:10px;left:10px;right:10px;background-color:var(--primary-color);color:white;padding:12px;border-radius:15px;text-align:center;z-index:1000;display:none;animation:slideIn 0.3s ease-out;box-shadow:4px 4px 8px var(--dark-shadow),-4px -4px 8px var(--light-shadow);font-weight:500;font-size:14px}
+@keyframes slideIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+.page{display:none;animation:fadeIn 0.3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.section-container{background:var(--bg-color);border-radius:20px;padding:15px;margin-bottom:15px;box-shadow:5px 5px 10px var(--dark-shadow),-5px -5px 10px var(--light-shadow)}
+.add-form{display:flex;flex-direction:column;gap:12px}
+.input-row{display:flex;flex-direction:column;gap:20px}
+input[type="date"],input[type="text"],input[type="number"]{width:100%;padding:16px 15px;border:none;border-radius:12px;background-color:var(--bg-color);box-shadow:4px 4px 8px var(--dark-shadow),-4px -4px 8px var(--light-shadow);color:var(--text-color);font-size:14px;transition:all 0.3s ease;-webkit-appearance:none;appearance:none}
+input:focus{outline:none;box-shadow:3px 3px 6px var(--dark-shadow),-3px -3px 6px var(--light-shadow)}
+.button-group{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+.button-group button{flex:1;margin:0;min-width:100px}
+button{padding:12px 15px;border:none;border-radius:12px;cursor:pointer;background-color:var(--bg-color);color:var(--primary-color);font-weight:600;font-size:14px;transition:all 0.3s ease;box-shadow:4px 4px 8px var(--dark-shadow),-4px -4px 8px var(--light-shadow)}
+button:hover,button:active{box-shadow:2px 2px 4px var(--dark-shadow),-2px -2px 4px var(--light-shadow);transform:translateY(2px)}
+.add-button{background-color:var(--primary-color) !important;color:white !important;box-shadow:4px 4px 8px rgba(109,91,152,0.3),-4px -4px 8px rgba(255,255,255,0.8) !important;font-weight:700 !important;letter-spacing:0.5px}
+.add-button:hover,.add-button:active{background-color:#5A4B80 !important;box-shadow:2px 2px 4px rgba(109,91,152,0.3),-2px -2px 4px rgba(255,255,255,0.8) !important;transform:translateY(2px)}
+table{width:100%;border-collapse:collapse;border-spacing:0}
+th,td{padding:10px 6px;text-align:center;border-bottom:1px solid rgba(163,177,198,0.2);font-size:13px;word-break:break-word;overflow-wrap:break-word}
+th{background-color:var(--primary-color);color:white;font-weight:600;position:sticky;top:0;z-index:10;white-space:nowrap}
+th:first-child{border-radius:15px 0 0 0}
+th:last-child{border-radius:0 15px 0 0}
+td{background-color:var(--bg-color)}
+tr:last-child td{border-bottom:none}
+th:nth-child(1),td:nth-child(1){width:18%;min-width:70px}
+th:nth-child(2),td:nth-child(2){width:32%;min-width:100px;max-width:150px;text-align:left;padding-left:10px;padding-right:10px}
+th:nth-child(3),td:nth-child(3){width:15%;min-width:50px}
+th:nth-child(4),td:nth-child(4){width:20%;min-width:70px}
+th:nth-child(5),td:nth-child(5){width:15%;min-width:70px}
+.table-actions{display:flex;gap:5px;justify-content:center;flex-wrap:wrap}
+.action-btn{padding:5px 8px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:11px;transition:all 0.3s ease;box-shadow:2px 2px 4px var(--dark-shadow),-2px -2px 4px var(--light-shadow);white-space:nowrap;margin:2px}
+.view-btn{background-color:var(--bg-color);color:var(--primary-color)}
+.delete-btn{background-color:var(--bg-color);color:var(--danger-color)}
+.action-btn:active{box-shadow:inset 2px 2px 4px var(--dark-shadow),inset -2px -2px 4px var(--light-shadow);transform:translateY(2px)}
+.summary-container{display:flex;flex-direction:column;gap:15px}
+.summary-card{background:var(--bg-color);border-radius:15px;padding:15px;box-shadow:5px 5px 10px var(--dark-shadow),-5px -5px 10px var(--light-shadow)}
+.summary-card h3{color:var(--primary-color);margin:0 0 12px 0;font-size:16px;text-align:center;padding-bottom:8px;border-bottom:2px solid rgba(109,91,152,0.2)}
+.summary-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(163,177,198,0.2)}
+.summary-row:last-child{border-bottom:none}
+.summary-label{color:var(--text-color);font-weight:600;font-size:14px}
+.summary-value{color:var(--primary-color);font-weight:700;font-size:14px}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background-color:var(--bg-color);padding:10px;display:flex;justify-content:space-around;box-shadow:0 -5px 15px rgba(0,0,0,0.1);z-index:100;border-top:1px solid rgba(163,177,198,0.3)}
+.nav-button{display:flex;flex-direction:column;align-items:center;padding:8px 12px;border:none;background:transparent;color:var(--text-color);font-size:12px;cursor:pointer;transition:all 0.3s ease;border-radius:12px;min-width:70px}
+.nav-button i{font-size:20px;margin-bottom:4px}
+.nav-button.active{color:var(--primary-color);background-color:var(--bg-color);box-shadow:inset 3px 3px 6px var(--dark-shadow),inset -3px -3px 6px var(--light-shadow);font-weight:700}
+.nav-button:active:not(.active){transform:translateY(2px)}
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background-color:rgba(0,0,0,0);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-content{background:var(--bg-color);padding:20px;border-radius:20px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto;box-shadow:10px 10px 20px var(--dark-shadow),-10px -10px 20px var(--light-shadow);position:relative}
+.modal-header{color:var(--primary-color);font-size:18px;margin:0 0 15px 0;font-weight:700;text-align:center}
+.modal-body{background:var(--bg-color);border-radius:12px;padding:15px;margin-bottom:15px;box-shadow:inset 3px 3px 6px var(--dark-shadow),inset -3px -3px 6px var(--light-shadow);font-size:14px;line-height:1.6;max-height:50vh;overflow-y:auto}
+.modal-close{display:block;width:100%;padding:12px;background:var(--primary-color);color:white;border:none;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;text-align:center;box-shadow:4px 4px 8px var(--dark-shadow),-4px -4px 8px var(--light-shadow)}
+.modal-close:active{box-shadow:inset 4px 4px 8px rgba(0,0,0,0.2)}
+.delete-confirm{position:fixed;top:0;left:0;right:0;bottom:0;background-color:rgba(0,0,0,0);z-index:1001;display:none;align-items:center;justify-content:center;padding:20px}
+.delete-confirm-content{background:var(--bg-color);padding:25px;border-radius:20px;width:100%;max-width:400px;text-align:center;box-shadow:10px 10px 20px var(--dark-shadow),-10px -10px 20px var(--light-shadow)}
+.delete-confirm-buttons{display:flex;gap:15px;margin-top:20px}
+.delete-confirm-buttons button{flex:1}
+.delete-confirm-buttons button:first-child{background-color:var(--danger-color);color:white}
+@media (max-width:360px){body{padding:8px;font-size:13px;padding-bottom:60px}
+h1{font-size:1.4rem}
+.section-container{padding:12px;margin-bottom:12px}
+input[type="date"],input[type="text"],input[type="number"]{padding:14px 12px;font-size:13px}
+button{padding:10px 12px;font-size:13px}
+th,td{padding:8px 4px;font-size:12px}
+th:nth-child(1),td:nth-child(1){width:20%;min-width:60px}
+th:nth-child(2),td:nth-child(2){width:30%;min-width:80px;max-width:100px;padding-left:6px;padding-right:6px}
+th:nth-child(3),td:nth-child(3){width:15%;min-width:40px}
+th:nth-child(4),td:nth-child(4){width:20%;min-width:60px}
+th:nth-child(5),td:nth-child(5){width:15%;min-width:60px}
+.action-btn{padding:4px 6px;font-size:10px;margin:1px}
+.summary-card{padding:12px}
+.summary-card h3{font-size:15px}
+.summary-label,.summary-value{font-size:13px}
+.bottom-nav{padding:8px}
+.nav-button{padding:6px 8px;font-size:11px;min-width:60px}
+.nav-button i{font-size:18px}}
+@media (max-height:500px) and (orientation:landscape){.section-container{padding:10px;margin-bottom:10px}
+.add-form{flex-direction:row;flex-wrap:wrap}
+.input-row{flex:1;min-width:150px}
+.button-group{width:100%}
+.summary-container{flex-direction:row;flex-wrap:wrap}
+.summary-card{flex:1;min-width:200px}
+.bottom-nav{padding:5px 10px}
+.nav-button{padding:4px 8px}}
+@media (max-width:320px){th:nth-child(2),td:nth-child(2){display:none}
+th:nth-child(1),td:nth-child(1){width:25%}
+th:nth-child(3),td:nth-child(3){width:20%}
+th:nth-child(4),td:nth-child(4){width:30%}
+th:nth-child(5),td:nth-child(5){width:25%}
+.bottom-nav{padding:6px}
+.nav-button{min-width:50px;padding:4px 6px;font-size:10px}
+.nav-button i{font-size:16px}}
+@supports (-webkit-overflow-scrolling:touch){input,textarea{font-size:16px !important}}
+</style>
+</head>
+<body>
+<h1>工作日记</h1>
+<div class="toast" id="toast"></div>
+<div id="add-page" class="page active">
+<div class="section-container">
+<div class="add-form">
+<div class="input-row">
+<input type="date" id="date-input" required title="请点击选择工作日期" onfocus="this.showPicker()">
+<input type="number" id="hours-input" min="0" step="0.5" placeholder="请输入工时（天）" title="按天计算（1天=8小时）" required>
+<input type="number" id="wage-input" min="0" step="100" placeholder="请输入日工资（元）" title="请输入当日约定工资" required>
+<input type="text" id="content-input" placeholder="工作内容（选填）：今天做了什么" title="请详细填写工作内容">
+</div>
+<button class="add-button" onclick="addWorkLog()">添加记录</button>
+<div class="button-group">
+<button onclick="exportData()">导出数据</button>
+<button onclick="importData()">导入数据</button>
+<button onclick="showDeleteAllConfirm()" style="color: var(--danger-color);">删除数据</button>
+</div>
+</div>
+</div>
+</div>
+<div id="table-page" class="page">
+<div class="section-container">
+<table id="worklog">
+<thead>
+<tr>
+<th>日期</th>
+<th>工作内容</th>
+<th>工时</th>
+<th>工资</th>
+<th>操作</th>
+</tr>
+</thead>
+<tbody>
+</tbody>
+</table>
+</div>
+</div>
+<div id="summary-page" class="page">
+<div class="summary-container">
+<div class="summary-card">
+<h3>月度统计</h3>
+<div id="monthly-hours"></div>
+</div>
+<div class="summary-card">
+<h3>总计</h3>
+<div class="summary-row">
+<span class="summary-label">总工时：</span>
+<span class="summary-value" id="total-hours-value">0 天</span>
+</div>
+<div class="summary-row">
+<span class="summary-label">总工资：</span>
+<span class="summary-value" id="total-wage-value">0 元</span>
+</div>
+</div>
+</div>
+</div>
+<div class="bottom-nav">
+<button class="nav-button active" onclick="switchPage('add-page')">
+<i>➕</i>
+<span>添加</span>
+</button>
+<button class="nav-button" onclick="switchPage('table-page')">
+<i>📋</i>
+<span>记录</span>
+</button>
+<button class="nav-button" onclick="switchPage('summary-page')">
+<i>📊</i>
+<span>统计</span>
+</button>
+</div>
+<div class="delete-confirm" id="delete-confirm">
+<div class="delete-confirm-content">
+<h3>确认删除</h3>
+<p>确定要删除这条记录吗？此操作无法撤销。</p>
+<div class="delete-confirm-buttons">
+<button onclick="confirmDelete()">确认删除</button>
+<button onclick="cancelDelete()">取消</button>
+</div>
+</div>
+</div>
+<div class="delete-confirm" id="delete-all-confirm">
+<div class="delete-confirm-content">
+<h3>确认删除所有数据</h3>
+<p>确定要删除所有工作记录吗？此操作无法撤销。</p>
+<div class="delete-confirm-buttons">
+<button onclick="confirmDeleteAll()">确认删除</button>
+<button onclick="cancelDeleteAll()">取消</button>
+</div>
+</div>
+</div>
+<script>
+let workLogs = JSON.parse(localStorage.getItem('workLogs')) || [];
+let lastWage = parseFloat(localStorage.getItem('lastWage')) || null;
+let lastHours = parseFloat(localStorage.getItem('lastHours')) || null;
+let deleteIndex = -1;
+function sortWorkLogs() {
+workLogs.sort((a, b) => new Date(b.date) - new Date(a.date));
+}
+function setDefaultDate() {
+const today = new Date();
+const year = today.getFullYear();
+const month = String(today.getMonth() + 1).padStart(2, '0');
+const day = String(today.getDate()).padStart(2, '0');
+document.getElementById('date-input').value = `${year}-${month}-${day}`;
+}
+function renderTable() {
+sortWorkLogs();
+const tbody = document.getElementById('worklog').getElementsByTagName('tbody')[0];
+tbody.innerHTML = '';
+if (workLogs.length === 0) {
+const row = document.createElement('tr');
+row.innerHTML = `
+<td colspan="5" style="padding: 30px 10px; color: #666; text-align: center;">
+暂无记录，请添加第一条工作记录
+</td>
+`;
+tbody.appendChild(row);
+return;
+}
+workLogs.forEach((log, index) => {
+const row = document.createElement('tr');
+const date = new Date(log.date);
+const month = date.getMonth();
+const monthColors = [
+'#FFEBEE', '#F3E5F5', '#E8EAF6', '#E3F2FD',
+'#E0F2F1', '#E8F5E8', '#FFF3E0', '#FBE9E7',
+'#EFEBE9', '#FAFAFA', '#ECEFF1', '#FFF8E1'
+];
+row.style.backgroundColor = monthColors[month];
+const contentPreview = log.content ?
+(log.content.length > 8 ? log.content.substring(0, 8) + '...' : log.content) :
+'无';
+row.innerHTML = `
+<td>${formatDate(log.date)}</td>
+<td title="${log.content || '无'}">${contentPreview}</td>
+<td>${log.hours}天</td>
+<td>${(log.hours * log.wage).toFixed(2)}元</td>
+<td>
+<div class="table-actions">
+${log.content ? `<button class="action-btn view-btn" onclick="showContent(${index})">查看</button>` : ''}
+<button class="action-btn delete-btn" onclick="showDeleteConfirm(${index})">删除</button>
+</div>
+</td>
+`;
+tbody.appendChild(row);
+});
+updateSummary();
+}
+function formatDate(dateString) {
+const date = new Date(dateString);
+const month = String(date.getMonth() + 1).padStart(2, '0');
+const day = String(date.getDate()).padStart(2, '0');
+return `${month}/${day}`;
+}
+function addWorkLog() {
+const date = document.getElementById('date-input').value;
+const content = document.getElementById('content-input').value.trim();
+const hours = parseFloat(document.getElementById('hours-input').value);
+const wage = parseFloat(document.getElementById('wage-input').value);
+if (!date) {
+showToast("请选择日期！");
+return;
+}
+if (hours < 0 || isNaN(hours)) {
+showToast("请输入有效的工时数值（≥0）");
+return;
+}
+if (wage < 0 || isNaN(wage)) {
+showToast("请输入有效的工资数值（≥0）");
+return;
+}
+const existingIndex = workLogs.findIndex(log => log.date === date);
+if (existingIndex !== -1) {
+if (confirm('该日期已有记录，是否覆盖？')) {
+workLogs.splice(existingIndex, 1);
+} else {
+showToast("已取消添加");
+return;
+}
+}
+lastHours = hours;
+lastWage = wage;
+localStorage.setItem('lastHours', hours);
+localStorage.setItem('lastWage', wage);
+workLogs.push({ date, content, hours, wage });
+sortWorkLogs();
+localStorage.setItem('workLogs', JSON.stringify(workLogs));
+renderTable();
+clearForm();
+showToast('记录添加成功！');
+setTimeout(() => {
+switchPage('table-page');
+}, 500);
+}
+function showToast(message) {
+const toast = document.getElementById('toast');
+toast.textContent = message;
+toast.style.display = 'block';
+setTimeout(() => {
+toast.style.display = 'none';
+}, 2000);
+}
+function clearForm() {
+setDefaultDate();
+document.getElementById('content-input').value = '';
+if (lastHours !== null && !isNaN(lastHours)) {
+document.getElementById('hours-input').value = lastHours;
+} else {
+document.getElementById('hours-input').value = '';
+}
+if (lastWage !== null && !isNaN(lastWage)) {
+document.getElementById('wage-input').value = lastWage;
+} else {
+document.getElementById('wage-input').value = '';
+}
+}
+function showDeleteConfirm(index) {
+deleteIndex = index;
+const deleteConfirm = document.getElementById('delete-confirm');
+deleteConfirm.style.display = 'flex';
+}
+function confirmDelete() {
+if (deleteIndex >= 0 && deleteIndex < workLogs.length) {
+workLogs.splice(deleteIndex, 1);
+sortWorkLogs();
+localStorage.setItem('workLogs', JSON.stringify(workLogs));
+renderTable();
+showToast('记录已删除');
+}
+cancelDelete();
+}
+function cancelDelete() {
+deleteIndex = -1;
+const deleteConfirm = document.getElementById('delete-confirm');
+deleteConfirm.style.display = 'none';
+}
+function showDeleteAllConfirm() {
+const deleteAllConfirm = document.getElementById('delete-all-confirm');
+deleteAllConfirm.style.display = 'flex';
+}
+function confirmDeleteAll() {
+workLogs = [];
+localStorage.removeItem('workLogs');
+localStorage.removeItem('lastWage');
+localStorage.removeItem('lastHours');
+lastWage = null;
+lastHours = null;
+document.getElementById('hours-input').value = '';
+document.getElementById('wage-input').value = '';
+renderTable();
+updateSummary();
+showToast('所有数据已删除');
+cancelDeleteAll();
+setTimeout(() => {
+switchPage('table-page');
+}, 500);
+}
+function cancelDeleteAll() {
+const deleteAllConfirm = document.getElementById('delete-all-confirm');
+deleteAllConfirm.style.display = 'none';
+}
+function showContent(index) {
+const log = workLogs[index];
+if (!log.content) return;
+const overlay = document.createElement('div');
+overlay.className = 'modal-overlay';
+overlay.onclick = (e) => {
+if (e.target === overlay) overlay.remove();
+};
+const modal = document.createElement('div');
+modal.className = 'modal-content';
+modal.innerHTML = `
+<h3 class="modal-header">${new Date(log.date).toLocaleDateString('zh-CN')} 工作详情</h3>
+<div class="modal-body">
+${log.content.replace(/\n/g, '<br>')}
+</div>
+<button class="modal-close" onclick="this.parentElement.parentElement.remove()">
+关闭
+</button>
+`;
+overlay.appendChild(modal);
+document.body.appendChild(overlay);
+}
+function updateSummary() {
+const totalHours = workLogs.reduce((sum, log) => sum + log.hours, 0);
+const totalWage = workLogs.reduce((sum, log) => sum + (log.hours * log.wage), 0);
+document.getElementById('total-hours-value').innerText = `${totalHours.toFixed(1)} 天`;
+document.getElementById('total-wage-value').innerText = `${totalWage.toFixed(2)} 元`;
+const monthlyData = {};
+workLogs.forEach(log => {
+const month = new Date(log.date).toLocaleString('zh-CN', {
+year: 'numeric',
+month: '2-digit'
+});
+if (!monthlyData[month]) {
+monthlyData[month] = { hours: 0, wage: 0 };
+}
+monthlyData[month].hours += log.hours;
+monthlyData[month].wage += log.hours * log.wage;
+});
+const monthlyContainer = document.getElementById('monthly-hours');
+monthlyContainer.innerHTML = '';
+if (Object.keys(monthlyData).length === 0) {
+monthlyContainer.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">暂无月度数据</div>';
+return;
+}
+Object.entries(monthlyData)
+.sort((a, b) => b[0].localeCompare(a[0]))
+.forEach(([month, data]) => {
+const row = document.createElement('div');
+row.className = 'summary-row';
+row.innerHTML = `
+<span class="summary-label">${month}</span>
+<span class="summary-value">${data.hours.toFixed(1)}天 / ${data.wage.toFixed(2)}元</span>
+`;
+monthlyContainer.appendChild(row);
+});
+}
+function switchPage(pageId) {
+const pages = document.querySelectorAll('.page');
+pages.forEach(page => {
+page.classList.remove('active');
+});
+const activePage = document.getElementById(pageId);
+if (activePage) {
+activePage.classList.add('active');
+if (pageId === 'table-page') {
+renderTable();
+} else if (pageId === 'summary-page') {
+updateSummary();
+}
+}
+const navButtons = document.querySelectorAll('.nav-button');
+navButtons.forEach(button => {
+if (button.getAttribute('onclick') === `switchPage('${pageId}')`) {
+button.classList.add('active');
+} else {
+button.classList.remove('active');
+}
+});
+window.scrollTo(0, 0);
+}
+function exportData() {
+const data = {
+workLogs: workLogs,
+lastWage: lastWage,
+lastHours: lastHours
+};
+const jsonString = JSON.stringify(data, null, 2);
+const blob = new Blob([jsonString], { type: 'application/json' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = `工作记录_${new Date().toISOString().split('T')[0]}.json`;
+document.body.appendChild(a);
+a.click();
+setTimeout(() => {
+URL.revokeObjectURL(url);
+document.body.removeChild(a);
+}, 100);
+showToast('数据已导出');
+}
+function importData() {
+const input = document.createElement('input');
+input.type = 'file';
+input.accept = '.json,application/json';
+input.onchange = function(event) {
+const file = event.target.files[0];
+if (!file) return;
+const reader = new FileReader();
+reader.onload = function(e) {
+try {
+const importedData = JSON.parse(e.target.result);
+if (!importedData.workLogs || !Array.isArray(importedData.workLogs)) {
+throw new Error('无效的数据格式');
+}
+workLogs = importedData.workLogs;
+lastWage = importedData.lastWage || null;
+lastHours = importedData.lastHours || null;
+sortWorkLogs();
+localStorage.setItem('workLogs', JSON.stringify(workLogs));
+if (lastWage !== null) {
+localStorage.setItem('lastWage', lastWage);
+}
+if (lastHours !== null) {
+localStorage.setItem('lastHours', lastHours);
+}
+clearForm();
+renderTable();
+updateSummary();
+showToast('数据导入成功！已自动整理日期顺序。');
+setTimeout(() => {
+switchPage('table-page');
+}, 500);
+} catch (error) {
+showToast('导入失败，请检查文件格式');
+console.error('导入错误:', error);
+}
+};
+reader.readAsText(file);
+};
+input.click();
+}
+window.onload = () => {
+setDefaultDate();
+clearForm();
+const inputs = document.querySelectorAll('input[type="date"], input[type="text"], input[type="number"]');
+inputs.forEach(input => {
+const originalPlaceholder = input.placeholder;
+input.addEventListener('focus', () => {
+input.placeholder = '';
+});
+input.addEventListener('blur', () => {
+input.placeholder = originalPlaceholder;
+});
+});
+sortWorkLogs();
+renderTable();
+updateSummary();
+switchPage('add-page');
+};
+window.addEventListener('visibilitychange', () => {
+if (!document.hidden) {
+setDefaultDate();
+}
+});
+document.getElementById('delete-confirm').addEventListener('click', function(e) {
+if (e.target === this) {
+cancelDelete();
+}
+});
+document.getElementById('delete-all-confirm').addEventListener('click', function(e) {
+if (e.target === this) {
+cancelDeleteAll();
+}
+});
+document.addEventListener('keydown', function(e) {
+if (e.key === 'Escape') {
+cancelDelete();
+cancelDeleteAll();
+}
+});
+</script>
+</body>
+</html>
