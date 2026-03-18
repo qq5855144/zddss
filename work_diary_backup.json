@@ -1,14 +1,8 @@
 {
   "workLogs": [
     {
-      "date": "2026-03-19",
-      "content": "按摩图",
-      "hours": 1,
-      "wage": 320
-    },
-    {
       "date": "2026-03-18",
-      "content": "",
+      "content": "认识认识",
       "hours": 1,
       "wage": 320
     },
@@ -28,5 +22,5 @@
   "lastWage": 320,
   "lastHours": 1,
   "version": "1.0",
-  "timestamp": "2026-03-18T11:41:51.361Z"
+  "timestamp": "2026-03-18T11:45:14.738Z"
 }
