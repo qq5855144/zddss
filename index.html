@@ -410,7 +410,7 @@
             color: var(--danger-color);
         }
 
-        /* 模态/删除确认保持不变 */
+        /* 模态/删除确认 */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -428,8 +428,7 @@
             width: 100%;
             max-width: 500px;
             max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 10px 10px 20px var(--dark-shadow), -10px -10px 20px var(--light-shadow);
+            overflow-y: auto;            
             position: relative;
         }
         .modal-header {
@@ -481,7 +480,7 @@
             width: 100%;
             max-width: 400px;
             text-align: center;
-            box-shadow: 10px 10px 20px var(--dark-shadow), -10px -10px 20px var(--light-shadow);
+            /* 移除外阴影，使弹窗更简洁 */
         }
         .delete-confirm-buttons {
             display: flex;
@@ -633,7 +632,7 @@
         </button>
     </div>
 
-    <!-- 删除确认弹窗 (单条) -->
+    <!-- 删除确认弹窗 (单条) - 基于日期 -->
     <div class="delete-confirm" id="delete-confirm">
         <div class="delete-confirm-content">
             <h3>确认删除</h3>
@@ -661,7 +660,8 @@
         let workLogs = JSON.parse(localStorage.getItem('workLogs')) || [];
         let lastWage = parseFloat(localStorage.getItem('lastWage')) || null;
         let lastHours = parseFloat(localStorage.getItem('lastHours')) || null;
-        let deleteIndex = -1;
+        // 改用 deleteDate 存储待删除记录的日期（唯一标识）
+        let deleteDate = null;
 
         // ---------- GitHub 配置 ----------
         let githubConfig = {
@@ -903,6 +903,7 @@
                 ];
                 row.style.backgroundColor = monthColors[month];
                 const contentPreview = log.content ? (log.content.length > 8 ? log.content.substring(0,8)+'...' : log.content) : '无';
+                // 修改：删除按钮传递日期而不是索引
                 row.innerHTML = `
                     <td>${formatDate(log.date)}</td>
                     <td title="${log.content || '无'}">${contentPreview}</td>
@@ -911,7 +912,7 @@
                     <td>
                         <div class="table-actions">
                             ${log.content ? '<button class="action-btn view-btn" onclick="showContent('+index+')">查看</button>' : ''}
-                            <button class="action-btn delete-btn" onclick="showDeleteConfirm('+index+')">删除</button>
+                            <button class="action-btn delete-btn" onclick="showDeleteConfirm(\'${log.date}\')">删除</button>
                         </div>
                     </td>
                 `;
@@ -967,34 +968,63 @@
             if (lastWage !== null && !isNaN(lastWage)) document.getElementById('wage-input').value = lastWage;
             else document.getElementById('wage-input').value = '';
         }
-        function showDeleteConfirm(index) { deleteIndex = index; document.getElementById('delete-confirm').style.display = 'flex'; }
+        // 修改：接收日期参数，存储到 deleteDate
+        function showDeleteConfirm(date) {
+            deleteDate = date;
+            document.getElementById('delete-confirm').style.display = 'flex';
+        }
+        // 修改：根据 deleteDate 删除记录，立即关闭弹窗，后台同步
         async function confirmDelete() {
-            if (deleteIndex >= 0 && deleteIndex < workLogs.length) {
-                workLogs.splice(deleteIndex, 1);
+            if (!deleteDate) {
+                cancelDelete();
+                return;
+            }
+            const index = workLogs.findIndex(log => log.date === deleteDate);
+            if (index === -1) {
+                showToast('记录不存在，可能已被删除');
+                cancelDelete();
+                return;
+            }
+            try {
+                workLogs.splice(index, 1);
                 sortWorkLogs();
                 localStorage.setItem('workLogs', JSON.stringify(workLogs));
                 renderTable();
                 showToast('记录已删除');
-                await triggerAutoSync();
+            } catch (e) {
+                console.error('删除操作失败:', e);
+            } finally {
+                cancelDelete(); // 立即关闭弹窗
             }
-            cancelDelete();
+            // 在后台触发同步，不等待
+            triggerAutoSync().catch(e => console.error('自动同步失败:', e));
         }
-        function cancelDelete() { deleteIndex = -1; document.getElementById('delete-confirm').style.display = 'none'; }
+        function cancelDelete() {
+            deleteDate = null;
+            document.getElementById('delete-confirm').style.display = 'none';
+        }
         function showDeleteAllConfirm() { document.getElementById('delete-all-confirm').style.display = 'flex'; }
+        // 修改：删除所有数据后立即关闭弹窗，后台同步
         async function confirmDeleteAll() {
-            workLogs = [];
-            localStorage.removeItem('workLogs');
-            localStorage.removeItem('lastWage');
-            localStorage.removeItem('lastHours');
-            lastWage = null; lastHours = null;
-            document.getElementById('hours-input').value = '';
-            document.getElementById('wage-input').value = '';
-            renderTable();
-            updateSummary();
-            showToast('所有数据已删除');
-            await triggerAutoSync();
-            cancelDeleteAll();
-            setTimeout(() => switchPage('table-page'), 500);
+            try {
+                workLogs = [];
+                localStorage.removeItem('workLogs');
+                localStorage.removeItem('lastWage');
+                localStorage.removeItem('lastHours');
+                lastWage = null; lastHours = null;
+                document.getElementById('hours-input').value = '';
+                document.getElementById('wage-input').value = '';
+                renderTable();
+                updateSummary();
+                showToast('所有数据已删除');
+            } catch (e) {
+                console.error('删除所有操作失败:', e);
+            } finally {
+                cancelDeleteAll(); // 立即关闭弹窗
+            }
+            // 后台触发同步
+            triggerAutoSync().catch(e => console.error('自动同步失败:', e));
+            setTimeout(() => switchPage('table-page'), 500); // 保留页面跳转
         }
         function cancelDeleteAll() { document.getElementById('delete-all-confirm').style.display = 'none'; }
         function showContent(index) {
