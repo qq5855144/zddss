@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -577,43 +578,39 @@
     </div>
 
     <!-- 新增：GitHub同步配置页 -->
-    <div id="github-page" class="page">
-        <div class="section-container">
-            <h3 style="color: var(--primary-color); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
-                <img src="https://api.iconify.design/uil:github.svg" width="24" height="24" alt="">同步设置
-            </h3>
-            <div class="setting-row">
-                <label>个人访问令牌 (token)</label>
-                <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" value="">
-                <small style="color: #666;">需要 repo 权限</small>
-            </div>
-            <div class="setting-row">
-                <label>仓库名称 (例如: backup)</label>
-                <input type="text" id="github-repo" placeholder="输入仓库名" value="">
-            </div>
-            <!-- 所有者信息隐藏存储，不显示 -->
-            <div class="github-badge" id="github-owner-badge">未验证或未获取所有者</div>
+<div id="github-page" class="page">
+    <div class="section-container">
+        <h3 style="color: var(--primary-color); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+            <img src="https://api.iconify.design/uil:github.svg" width="24" height="24" alt="">同步设置
+        </h3>
+        <div class="setting-row">
+            <label>个人访问令牌 (token)</label>
+            <input type="password" id="github-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" value="">
+            <small style="color: #666;">需要 repo 权限</small>
+        </div>
+        <div class="setting-row">
+            <label>仓库名称 (例如: backup)</label>
+            <input type="text" id="github-repo" placeholder="输入仓库名" value="">
+        </div>
+        <!-- 所有者信息隐藏存储，不显示 -->
+        <div class="github-badge" id="github-owner-badge">未验证或未获取所有者</div>
 
-            <!-- 自动同步滑块开关 -->
-            <div class="switch-row">
-                <span class="switch-label">自动同步</span>
-                <label class="switch">
-                    <input type="checkbox" id="auto-sync-checkbox">
-                    <span class="slider"></span>
-                </label>
-            </div>
+        <!-- 自动同步滑块开关 -->
+        <div class="switch-row">
+            <span class="switch-label">自动同步</span>
+            <label class="switch">
+                <input type="checkbox" id="auto-sync-checkbox">
+                <span class="slider"></span>
+            </label>
+        </div>
 
-            <!-- 手动操作按钮组 -->
-            <div class="flex-row" style="margin: 20px 0 10px;">
-                <button id="manual-push-btn" onclick="manualPushToGithub()">同步到云端</button>
-                <button id="manual-pull-btn" onclick="manualPullFromGithub()">从云端同步</button>
-            </div>
-            <div style="margin-top: 15px;">
-                <button onclick="testGithubConnection()" style="background-color: transparent;">测试连接</button>
-                <button onclick="switchPage('add-page')" style="float: right;">返回</button>
-            </div>
+        <!-- 手动操作按钮组 -->
+        <div class="flex-row" style="margin: 20px 0 10px;">
+            <button id="manual-push-btn" onclick="manualPushToGithub()">同步到云端</button>
+            <button id="manual-pull-btn" onclick="manualPullFromGithub()">从云端同步</button>
         </div>
     </div>
+</div>
 
     <!-- 底部导航 (4个按钮) -->
     <div class="bottom-nav">
