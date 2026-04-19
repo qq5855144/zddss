@@ -1,6 +1,42 @@
 {
   "workLogs": [
     {
+      "date": "2026-04-20",
+      "content": "",
+      "hours": 1,
+      "wage": 320
+    },
+    {
+      "date": "2026-04-19",
+      "content": "",
+      "hours": 1.5,
+      "wage": 320
+    },
+    {
+      "date": "2026-04-18",
+      "content": "",
+      "hours": 1,
+      "wage": 320
+    },
+    {
+      "date": "2026-04-17",
+      "content": "",
+      "hours": 1,
+      "wage": 320
+    },
+    {
+      "date": "2026-04-16",
+      "content": "",
+      "hours": 1,
+      "wage": 320
+    },
+    {
+      "date": "2026-04-15",
+      "content": "",
+      "hours": 1,
+      "wage": 320
+    },
+    {
       "date": "2026-04-14",
       "content": "",
       "hours": 1,
@@ -184,5 +220,5 @@
   "lastWage": 320,
   "lastHours": 1,
   "version": "1.0",
-  "timestamp": "2026-04-13T23:22:54.865Z"
+  "timestamp": "2026-04-19T09:18:47.787Z"
 }
