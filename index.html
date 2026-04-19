@@ -264,6 +264,87 @@
             box-shadow: inset 4px 4px 8px var(--dark-shadow), inset -4px -4px 8px var(--light-shadow);
         }
 
+        /* 工资浮动提示 */
+        .day-wage-tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            background: var(--bg-color);
+            border-radius: 14px;
+            padding: 10px 14px;
+            z-index: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.2s ease-out;
+            box-shadow: 5px 5px 10px var(--dark-shadow), -5px -5px 10px var(--light-shadow);
+            white-space: nowrap;
+            font-size: 12px;
+            color: var(--text-color);
+        }
+        .day-wage-tooltip.show {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
+        .day-wage-tooltip .tooltip-date {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 4px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .day-wage-tooltip .tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 2px 0;
+        }
+        .day-wage-tooltip .tooltip-label {
+            color: #666;
+        }
+        .day-wage-tooltip .tooltip-value {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .day-wage-tooltip .tooltip-total {
+            border-top: 1px solid rgba(163,177,198,0.3);
+            margin-top: 4px;
+            padding-top: 4px;
+        }
+        .day-wage-tooltip .tooltip-total .tooltip-value {
+            color: var(--success-color);
+            font-size: 13px;
+        }
+        /* 超出顶部时改为显示在下方 */
+        .day-wage-tooltip.position-bottom {
+            top: auto;
+            bottom: auto;
+            margin-top: 8px;
+        }
+        /* 独立定位的箭头，始终相对于日期格子居中，不受 tooltip 水平偏移影响 */
+        .wage-tooltip-arrow {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border: 6px solid transparent;
+            pointer-events: none;
+            z-index: 501;
+        }
+        /* 上方显示：箭头在 tooltip 下方（日期格子顶部） */
+        .wage-tooltip-arrow.arrow-bottom {
+            bottom: calc(100% + 2px);
+            border-top-color: var(--bg-color);
+            border-bottom: none;
+        }
+        /* 下方显示：箭头在 tooltip 上方（日期格子底部） */
+        .wage-tooltip-arrow.arrow-top {
+            top: calc(100% + 2px);
+            border-bottom-color: var(--bg-color);
+            border-top: none;
+        }
+
         /* 长按上下文菜单 */
         .context-menu {
             position: fixed;
@@ -813,6 +894,9 @@
         let longPressTarget = null;
         const LONG_PRESS_DURATION = 500; // 长按触发时间(ms)
 
+        // 工资浮动提示相关
+        let activeWageTooltip = null;
+
         // ---------- GitHub 配置 ----------
         let githubConfig = {
             token: '',
@@ -1156,6 +1240,85 @@
             }
         }
 
+        // 显示工资浮动提示
+        function showWageTooltip(element, record) {
+            hideWageTooltip(); // 先关闭已有的
+            if (!record) return;
+
+            const tooltip = document.createElement('div');
+            tooltip.className = 'day-wage-tooltip';
+            const totalWage = (record.hours * record.wage).toFixed(2);
+            tooltip.innerHTML = `
+                <div class="tooltip-date">${formatDateFull(record.date)}</div>
+                <div class="tooltip-row"><span class="tooltip-label">工时</span><span class="tooltip-value">${record.hours} 天</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">日薪</span><span class="tooltip-value">${record.wage} 元</span></div>
+                <div class="tooltip-row tooltip-total"><span class="tooltip-label">当日工资</span><span class="tooltip-value">${totalWage} 元</span></div>
+            `;
+            element.style.position = 'relative';
+            element.appendChild(tooltip);
+            activeWageTooltip = tooltip;
+
+            // 先强制渲染一帧，获取实际尺寸后再做边界判断
+            requestAnimationFrame(() => {
+                const rect = tooltip.getBoundingClientRect();
+                const padding = 8;
+                let needsBottom = false;
+                let offsetX = -50; // 默认 translateX(-50%)
+
+                // 1. 检查上方空间是否足够，不够则改为显示在下方
+                if (rect.top < padding) {
+                    needsBottom = true;
+                    tooltip.classList.add('position-bottom');
+                }
+
+                // 2. 检查左右是否超出视口，调整水平偏移
+                if (rect.left < padding) {
+                    const shift = Math.abs(rect.left) + padding;
+                    offsetX = -50 + (shift / rect.width * 100);
+                } else if (rect.right > window.innerWidth - padding) {
+                    const shift = rect.right - window.innerWidth + padding;
+                    offsetX = -50 - (shift / rect.width * 100);
+                }
+
+                // 应用水平偏移
+                if (offsetX !== -50) {
+                    tooltip.style.transform = `translateX(${offsetX}%) scale(0.9)`;
+                }
+
+                // 3. 创建独立的箭头元素（放在日期格子内部，始终指向格子中心）
+                const arrow = document.createElement('div');
+                arrow.className = 'wage-tooltip-arrow ' + (needsBottom ? 'arrow-top' : 'arrow-bottom');
+                element.appendChild(arrow);
+                tooltip._arrow = arrow;
+
+                // 边界调整完成后再触发动画显示
+                requestAnimationFrame(() => {
+                    tooltip.classList.add('show');
+                    if (offsetX !== -50) {
+                        tooltip.style.transform = `translateX(${offsetX}%) scale(1)`;
+                    }
+                });
+            });
+
+            // 5秒后自动关闭
+            tooltip._autoHideTimer = setTimeout(() => hideWageTooltip(), 5000);
+        }
+
+        // 隐藏工资浮动提示
+        function hideWageTooltip() {
+            if (activeWageTooltip) {
+                if (activeWageTooltip._autoHideTimer) {
+                    clearTimeout(activeWageTooltip._autoHideTimer);
+                }
+                // 同时移除独立箭头
+                if (activeWageTooltip._arrow) {
+                    activeWageTooltip._arrow.remove();
+                }
+                activeWageTooltip.remove();
+                activeWageTooltip = null;
+            }
+        }
+
         // 绑定日期格子的事件（长按和右键）
         function bindDayEvents(element, dateStr, record) {
             // 触摸长按事件
@@ -1164,21 +1327,28 @@
                 element.classList.add('pressing');
                 longPressTimer = setTimeout(() => {
                     element.classList.remove('pressing');
+                    longPressTimer = null;
                     if (record) {
+                        hideWageTooltip(); // 长按前先关闭工资提示
                         showContextMenu(e.touches[0].clientX, e.touches[0].clientY, dateStr, record);
                     } else {
-                        // 无记录时长按，提示
                         showToast('该日期暂无记录');
                     }
-                    longPressTimer = null;
                 }, LONG_PRESS_DURATION);
             }, { passive: true });
             
             element.addEventListener('touchend', (e) => {
                 element.classList.remove('pressing');
                 if (longPressTimer) {
+                    // 计时器还在，说明是短按
                     clearTimeout(longPressTimer);
                     longPressTimer = null;
+                    // 短按：有记录则显示工资提示，无记录提示暂无记录
+                    if (record) {
+                        showWageTooltip(element, record);
+                    } else {
+                        showToast('该日期暂无记录');
+                    }
                 }
                 longPressTarget = null;
             }, { passive: true });
@@ -1218,20 +1388,27 @@
                 element.classList.add('pressing');
                 longPressTimer = setTimeout(() => {
                     element.classList.remove('pressing');
+                    longPressTimer = null;
                     if (record) {
+                        hideWageTooltip(); // 长按前先关闭工资提示
                         showContextMenu(e.clientX, e.clientY, dateStr, record);
                     } else {
                         showToast('该日期暂无记录');
                     }
-                    longPressTimer = null;
                 }, LONG_PRESS_DURATION);
             });
             
             element.addEventListener('mouseup', (e) => {
                 element.classList.remove('pressing');
                 if (longPressTimer) {
+                    // 计时器还在，说明是短按
                     clearTimeout(longPressTimer);
                     longPressTimer = null;
+                    if (record) {
+                        showWageTooltip(element, record);
+                    } else {
+                        showToast('该日期暂无记录');
+                    }
                 }
                 longPressTarget = null;
             });
@@ -1367,6 +1544,7 @@
         }
 
         function switchPage(pageId) {
+            hideWageTooltip(); // 页面切换时关闭工资提示
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(pageId).classList.add('active');
             document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
@@ -1442,9 +1620,16 @@
             } 
         });
         
-        // 滚动时隐藏上下文菜单
-        window.addEventListener('scroll', hideContextMenu, { passive: true });
-        window.addEventListener('resize', hideContextMenu, { passive: true });
+        // 滚动时隐藏上下文菜单和工资提示
+        window.addEventListener('scroll', () => { hideContextMenu(); hideWageTooltip(); }, { passive: true });
+        window.addEventListener('resize', () => { hideContextMenu(); hideWageTooltip(); }, { passive: true });
+
+        // 点击页面其他地方关闭工资提示（但不阻止日期格子的点击事件）
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.calendar-day') && activeWageTooltip) {
+                hideWageTooltip();
+            }
+        });
     </script>
 </body>
 </html>
