@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>工作日记 · 云同步</title>
     <style>
-        /* ===== 全局样式 ===== */
         :root {
             --bg-color: #E0E5EC;
             --primary-color: #6D5B98;
@@ -236,11 +235,17 @@
             -webkit-user-select: none;
         }
         .calendar-day.no-record {
-            background: var(--green-fill);  /* 绿色填充 无记录 */
+            background: var(--green-fill);
             box-shadow: inset 2px 2px 5px rgba(0,0,0,0.05), inset -2px -2px 5px rgba(255,255,255,0.5);
         }
+        .calendar-day.past-rest {
+            background: #FED7D7;
+            box-shadow: inset 2px 2px 5px rgba(245,101,101,0.08), inset -2px -2px 5px rgba(255,255,255,0.6);
+            color: #C53030;
+            font-weight: 500;
+        }
         .calendar-day.has-record {
-            background: #EDE7F6;  /* 淡紫，表示有记录 */
+            background: #EDE7F6;
             box-shadow: inset 2px 2px 5px rgba(109,91,152,0.1), inset -2px -2px 5px rgba(255,255,255,0.8);
             color: var(--primary-color);
             font-weight: 600;
@@ -315,13 +320,11 @@
             color: var(--success-color);
             font-size: 13px;
         }
-        /* 超出顶部时改为显示在下方 */
         .day-wage-tooltip.position-bottom {
             top: auto;
             bottom: auto;
             margin-top: 8px;
         }
-        /* 独立定位的箭头，始终相对于日期格子居中，不受 tooltip 水平偏移影响 */
         .wage-tooltip-arrow {
             position: absolute;
             left: 50%;
@@ -332,13 +335,11 @@
             pointer-events: none;
             z-index: 501;
         }
-        /* 上方显示：箭头在 tooltip 下方（日期格子顶部） */
         .wage-tooltip-arrow.arrow-bottom {
             bottom: calc(100% + 2px);
             border-top-color: var(--bg-color);
             border-bottom: none;
         }
-        /* 下方显示：箭头在 tooltip 上方（日期格子底部） */
         .wage-tooltip-arrow.arrow-top {
             top: calc(100% + 2px);
             border-bottom-color: var(--bg-color);
@@ -710,9 +711,7 @@
     <h1>工作日记 · 云同步</h1>
     <div class="toast" id="toast"></div>
 
-    <!-- 添加上下文菜单遮罩 -->
     <div class="context-menu-overlay" id="context-menu-overlay" onclick="hideContextMenu()"></div>
-    <!-- 长按上下文菜单 -->
     <div class="context-menu" id="context-menu">
         <div class="context-menu-item view-item" id="menu-view" onclick="handleMenuAction('view')">
             <img src="https://api.iconify.design/material-symbols:visibility-rounded.svg?color=%233182CE" width="18" height="18" alt=""><span>查看</span>
@@ -809,7 +808,7 @@
         </div>
     </div>
 
-    <!-- 底部导航 (4个按钮) -->
+    <!-- 底部导航 -->
     <div class="bottom-nav">
         <button class="nav-button active" onclick="switchPage('add-page')">
             <img src="https://api.iconify.design/material-symbols:add.svg" alt="add" width="20" height="20"><span>添加</span>
@@ -825,7 +824,7 @@
         </button>
     </div>
 
-    <!-- 删除确认弹窗 (单条) -->
+    <!-- 删除确认弹窗 -->
     <div class="delete-confirm" id="delete-confirm">
         <div class="delete-confirm-content">
             <h3>确认删除</h3>
@@ -836,7 +835,6 @@
             </div>
         </div>
     </div>
-    <!-- 删除所有确认 -->
     <div class="delete-confirm" id="delete-all-confirm">
         <div class="delete-confirm-content">
             <h3>确认删除所有数据</h3>
@@ -877,33 +875,41 @@
     </div>
 
     <script>
-        // ================== 数据逻辑 ==================
+        /**
+         * 工作日记 · 云同步
+         * 本地存储 + GitHub Gist 双备份的工时记录应用
+         */
+
+        // ============================================================
+        // 状态变量
+        // ============================================================
         let workLogs = JSON.parse(localStorage.getItem('workLogs')) || [];
         let lastWage = parseFloat(localStorage.getItem('lastWage')) || null;
         let lastHours = parseFloat(localStorage.getItem('lastHours')) || null;
         let deleteDate = null;
-
-        // 日历当前显示年月
         let currentDisplayYear = new Date().getFullYear();
-        let currentDisplayMonth = new Date().getMonth(); // 0-11
+        let currentDisplayMonth = new Date().getMonth();
 
-        // 上下文菜单相关
+        // 上下文菜单状态
         let contextMenuDate = null;
         let contextMenuRecord = null;
         let longPressTimer = null;
         let longPressTarget = null;
-        const LONG_PRESS_DURATION = 500; // 长按触发时间(ms)
+        const LONG_PRESS_DURATION = 500;
 
-        // 工资浮动提示相关
+        // 浮动提示状态
         let activeWageTooltip = null;
 
-        // ---------- GitHub 配置 ----------
+        // ============================================================
+        // GitHub 配置模块
+        // ============================================================
         let githubConfig = {
             token: '',
             owner: '',
             repo: '',
             autoSync: false
         };
+
         function loadGithubConfig() {
             const saved = localStorage.getItem('githubConfig');
             if (saved) {
@@ -914,15 +920,17 @@
             document.getElementById('auto-sync-checkbox').checked = githubConfig.autoSync || false;
             updateOwnerBadge();
         }
+
         function saveGithubConfig() {
             localStorage.setItem('githubConfig', JSON.stringify(githubConfig));
         }
+
         function updateOwnerBadge() {
             const badge = document.getElementById('github-owner-badge');
             if (githubConfig.owner) {
-                badge.innerHTML = `&#9989; 验证成功 (${githubConfig.owner}) `;
+                badge.innerHTML = '&#9989; 验证成功 (' + githubConfig.owner + ')';
             } else {
-                badge.innerHTML = `&#9888;&#65039; 未验证所有者，请输入token`;
+                badge.innerHTML = '&#9888;&#65039; 未验证所有者，请输入token';
             }
         }
 
@@ -930,7 +938,7 @@
             if (!token) return null;
             try {
                 const res = await fetch('https://api.github.com/user', {
-                    headers: { 'Authorization': `token ${token}` }
+                    headers: { 'Authorization': 'token ' + token }
                 });
                 if (!res.ok) throw new Error('Token无效或权限不足');
                 const user = await res.json();
@@ -938,20 +946,19 @@
                 githubConfig.owner = user.login;
                 saveGithubConfig();
                 updateOwnerBadge();
-                showToast(`&#9989; 所有者 ${user.login} 验证成功`);
+                showToast('&#9989; 所有者 ' + user.login + ' 验证成功');
                 return user.login;
             } catch (e) {
                 showToast('&#10060; ' + e.message);
                 githubConfig.owner = '';
-                githubConfig.token = '';  
+                githubConfig.token = '';
                 saveGithubConfig();
                 updateOwnerBadge();
                 return null;
             }
         }
 
-        let tokenTimeout;
-        document.getElementById('github-token').addEventListener('blur', async (e) => {
+        async function handleTokenBlur(e) {
             const token = e.target.value.trim();
             if (token) {
                 await validateTokenAndFetchOwner(token);
@@ -961,23 +968,32 @@
                 saveGithubConfig();
                 updateOwnerBadge();
             }
-        });
-        document.getElementById('github-repo').addEventListener('change', (e) => {
+        }
+        document.getElementById('github-token').addEventListener('blur', handleTokenBlur);
+
+        function handleRepoChange(e) {
             githubConfig.repo = e.target.value.trim();
             saveGithubConfig();
-        });
-        document.getElementById('auto-sync-checkbox').addEventListener('change', (e) => {
+        }
+        document.getElementById('github-repo').addEventListener('change', handleRepoChange);
+
+        function handleAutoSyncChange(e) {
             githubConfig.autoSync = e.target.checked;
             saveGithubConfig();
-        });
+        }
+        document.getElementById('auto-sync-checkbox').addEventListener('change', handleAutoSyncChange);
 
+        // ============================================================
+        // GitHub 同步模块
+        // ============================================================
         const BACKUP_PATH = 'work_diary_backup.json';
-        async function syncToGithub(manual = false) {
+
+        async function syncToGithub(manual) {
             if (!githubConfig.token || !githubConfig.owner || !githubConfig.repo) {
                 if (manual) showToast('请先完成token验证和仓库填写');
                 return false;
             }
-            const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${BACKUP_PATH}`;
+            const url = 'https://api.github.com/repos/' + githubConfig.owner + '/' + githubConfig.repo + '/contents/' + BACKUP_PATH;
             const dataToUpload = {
                 workLogs: workLogs,
                 lastWage: lastWage,
@@ -989,17 +1005,18 @@
             try {
                 let sha = null;
                 try {
-                    const getRes = await fetch(url, { headers: { 'Authorization': `token ${githubConfig.token}` } });
+                    const getRes = await fetch(url, { headers: { 'Authorization': 'token ' + githubConfig.token } });
                     if (getRes.ok) { const meta = await getRes.json(); sha = meta.sha; }
                     else if (getRes.status !== 404) throw new Error('获取文件信息失败');
                 } catch (e) {}
-                const body = { message: sha ? '更新工作日记备份' : '创建工作日记备份', content: content, ...(sha && { sha: sha }) };
+                const body = { message: sha ? '更新工作日记备份' : '创建工作日记备份', content: content };
+                if (sha) body.sha = sha;
                 const putRes = await fetch(url, {
                     method: 'PUT',
-                    headers: { 'Authorization': `token ${githubConfig.token}`, 'Content-Type': 'application/json' },
+                    headers: { 'Authorization': 'token ' + githubConfig.token, 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                if (!putRes.ok) throw new Error(`上传失败 (${putRes.status})`);
+                if (!putRes.ok) throw new Error('上传失败 (' + putRes.status + ')');
                 showToast('&#9989; 已同步到 GitHub');
                 return true;
             } catch (err) {
@@ -1014,9 +1031,9 @@
                 showToast('请先完成token验证和仓库填写');
                 return;
             }
-            const url = `https://api.github.com/repos/${githubConfig.owner}/${githubConfig.repo}/contents/${BACKUP_PATH}`;
+            const url = 'https://api.github.com/repos/' + githubConfig.owner + '/' + githubConfig.repo + '/contents/' + BACKUP_PATH;
             try {
-                const res = await fetch(url, { headers: { 'Authorization': `token ${githubConfig.token}` } });
+                const res = await fetch(url, { headers: { 'Authorization': 'token ' + githubConfig.token } });
                 if (!res.ok) throw new Error('云端文件不存在或无法访问');
                 const meta = await res.json();
                 const content = decodeURIComponent(escape(atob(meta.content)));
@@ -1044,19 +1061,26 @@
             if (githubConfig.autoSync) await syncToGithub(false);
         }
 
-        function sortWorkLogs() { workLogs.sort((a, b) => new Date(b.date) - new Date(a.date)); }
+        // ============================================================
+        // 数据操作模块
+        // ============================================================
+        function sortWorkLogs() {
+            workLogs.sort(function compareByDateDesc(a, b) { return new Date(b.date) - new Date(a.date); });
+        }
+
         function setDefaultDate() {
             const today = new Date();
-            document.getElementById('date-input').value = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            document.getElementById('date-input').value = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
         }
 
         function formatDate(dateString) {
             const date = new Date(dateString);
-            return `${String(date.getMonth()+1).padStart(2,'0')}/${String(date.getDate()).padStart(2,'0')}`;
+            return String(date.getMonth()+1).padStart(2,'0') + '/' + String(date.getDate()).padStart(2,'0');
         }
+
         function formatDateFull(dateString) {
             const date = new Date(dateString);
-            return `${date.getFullYear()}年${String(date.getMonth()+1).padStart(2,'0')}月${String(date.getDate()).padStart(2,'0')}日`;
+            return date.getFullYear() + '年' + String(date.getMonth()+1).padStart(2,'0') + '月' + String(date.getDate()).padStart(2,'0') + '日';
         }
 
         async function addWorkLog() {
@@ -1064,18 +1088,19 @@
             const content = document.getElementById('content-input').value.trim();
             const hours = parseFloat(document.getElementById('hours-input').value);
             const wage = parseFloat(document.getElementById('wage-input').value);
-            if (!date) { showToast("请选择日期！"); return; }
-            if (hours < 0 || isNaN(hours)) { showToast("请输入有效的工时数值"); return; }
-            if (wage < 0 || isNaN(wage)) { showToast("请输入有效的工资数值"); return; }
-            const existingIndex = workLogs.findIndex(log => log.date === date);
+            if (!date) { showToast('请选择日期！'); return; }
+            if (hours < 0 || isNaN(hours)) { showToast('请输入有效的工时数值'); return; }
+            if (wage < 0 || isNaN(wage)) { showToast('请输入有效的工资数值'); return; }
+            function findByDate(log) { return log.date === date; }
+            const existingIndex = workLogs.findIndex(findByDate);
             if (existingIndex !== -1) {
-                if (!confirm('该日期已有记录，是否覆盖？')) { showToast("已取消添加"); return; }
+                if (!confirm('该日期已有记录，是否覆盖？')) { showToast('已取消添加'); return; }
                 else workLogs.splice(existingIndex, 1);
             }
             lastHours = hours; lastWage = wage;
             localStorage.setItem('lastHours', hours);
             localStorage.setItem('lastWage', wage);
-            workLogs.push({ date, content, hours, wage });
+            workLogs.push({ date: date, content: content, hours: hours, wage: wage });
             sortWorkLogs();
             localStorage.setItem('workLogs', JSON.stringify(workLogs));
             updateSummary();
@@ -1089,8 +1114,9 @@
             const toast = document.getElementById('toast');
             toast.innerHTML = message;
             toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+            setTimeout(function hideToastTimer() { toast.style.display = 'none'; }, 2000);
         }
+
         function clearForm() {
             setDefaultDate();
             document.getElementById('content-input').value = '';
@@ -1098,17 +1124,22 @@
             document.getElementById('wage-input').value = (lastWage !== null && !isNaN(lastWage)) ? lastWage : '';
         }
 
-        function showDeleteConfirm(date) { 
-            deleteDate = date; 
-            const log = workLogs.find(l => l.date === date);
+        // ============================================================
+        // 删除操作模块
+        // ============================================================
+        function showDeleteConfirm(date) {
+            deleteDate = date;
+            function matchByDate(l) { return l.date === date; }
+            const log = workLogs.find(matchByDate);
             const dateText = log ? formatDateFull(log.date) : date;
-            document.getElementById('delete-confirm-text').textContent = `确定要删除 ${dateText} 的记录吗？此操作无法撤销。`;
-            document.getElementById('delete-confirm').style.display = 'flex'; 
+            document.getElementById('delete-confirm-text').textContent = '确定要删除 ' + dateText + ' 的记录吗？此操作无法撤销。';
+            document.getElementById('delete-confirm').style.display = 'flex';
         }
 
         async function confirmDelete() {
             if (!deleteDate) { cancelDelete(); return; }
-            const index = workLogs.findIndex(log => log.date === deleteDate);
+            function findByDeleteDate(log) { return log.date === deleteDate; }
+            const index = workLogs.findIndex(findByDeleteDate);
             if (index === -1) { showToast('记录不存在'); cancelDelete(); return; }
             workLogs.splice(index, 1);
             sortWorkLogs();
@@ -1117,161 +1148,223 @@
             renderCalendarView();
             showToast('记录已删除');
             cancelDelete();
-            triggerAutoSync().catch(e=>{});
+            triggerAutoSync().catch(function noop() {});
         }
+
         function cancelDelete() { deleteDate = null; document.getElementById('delete-confirm').style.display = 'none'; }
+
         function showDeleteAllConfirm() { document.getElementById('delete-all-confirm').style.display = 'flex'; }
+
         async function confirmDeleteAll() {
             workLogs = [];
             localStorage.removeItem('workLogs');
-            localStorage.removeItem('lastWage'); localStorage.removeItem('lastHours');
-            lastWage = null; lastHours = null;
+            localStorage.removeItem('lastWage');
+            localStorage.removeItem('lastHours');
+            lastWage = null;
+            lastHours = null;
             document.getElementById('hours-input').value = '';
             document.getElementById('wage-input').value = '';
             updateSummary();
             renderCalendarView();
             showToast('所有数据已删除');
             cancelDeleteAll();
-            triggerAutoSync().catch(e=>{});
+            triggerAutoSync().catch(function noop() {});
         }
+
         function cancelDeleteAll() { document.getElementById('delete-all-confirm').style.display = 'none'; }
 
+        // ============================================================
+        // 内容展示与编辑模块
+        // ============================================================
         function showContent(dateOrIndex) {
             let log;
             if (typeof dateOrIndex === 'number') {
                 log = workLogs[dateOrIndex];
             } else {
-                log = workLogs.find(l => l.date === dateOrIndex);
+                log = workLogs.find(function matchDateOrIndex(l) { return l.date === dateOrIndex; });
             }
             if (!log || !log.content) return;
-            const overlay = document.createElement('div'); overlay.className = 'modal-overlay';
-            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-            const modal = document.createElement('div'); modal.className = 'modal-content';
-            modal.innerHTML = `
-                <h3 class="modal-header">${new Date(log.date).toLocaleDateString('zh-CN')} 工作详情</h3>
-                <div class="modal-body">${log.content.replace(/\n/g, '<br>')}</div>
-                <button class="modal-close" onclick="this.parentElement.parentElement.remove()">关闭</button>
-            `;
-            overlay.appendChild(modal); document.body.appendChild(overlay);
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.onclick = function handleOverlayClick(e) { if (e.target === overlay) overlay.remove(); };
+            const modal = document.createElement('div');
+            modal.className = 'modal-content';
+            modal.innerHTML = '<h3 class="modal-header">' + new Date(log.date).toLocaleDateString('zh-CN') + ' 工作详情</h3>' +
+                '<div class="modal-body">' + log.content.replace(/\n/g, '<br>') + '</div>' +
+                '<button class="modal-close" onclick="this.parentElement.parentElement.remove()">关闭</button>';
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
         }
 
+        function openEditModal(dateStr) {
+            function findByDateStr(l) { return l.date === dateStr; }
+            const log = workLogs.find(findByDateStr);
+            if (!log) return;
+            document.getElementById('edit-date').value = log.date;
+            document.getElementById('edit-date-display').value = formatDateFull(log.date);
+            document.getElementById('edit-hours').value = log.hours;
+            document.getElementById('edit-wage').value = log.wage;
+            document.getElementById('edit-content').value = log.content || '';
+            document.getElementById('edit-modal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+        }
+
+        async function saveEdit() {
+            const date = document.getElementById('edit-date').value;
+            const hours = parseFloat(document.getElementById('edit-hours').value);
+            const wage = parseFloat(document.getElementById('edit-wage').value);
+            const content = document.getElementById('edit-content').value.trim();
+            if (!date) { showToast('日期无效'); return; }
+            if (hours < 0 || isNaN(hours)) { showToast('请输入有效的工时数值'); return; }
+            if (wage < 0 || isNaN(wage)) { showToast('请输入有效的工资数值'); return; }
+            function findEditDate(log) { return log.date === date; }
+            const index = workLogs.findIndex(findEditDate);
+            if (index === -1) { showToast('记录不存在'); closeEditModal(); return; }
+            workLogs[index] = { date: date, content: content, hours: hours, wage: wage };
+            sortWorkLogs();
+            localStorage.setItem('workLogs', JSON.stringify(workLogs));
+            updateSummary();
+            renderCalendarView();
+            closeEditModal();
+            showToast('记录已更新');
+            await triggerAutoSync();
+        }
+
+        // ============================================================
+        // 统计模块
+        // ============================================================
         function updateSummary() {
-            const totalHours = workLogs.reduce((sum, log) => sum + log.hours, 0);
-            const totalWage = workLogs.reduce((sum, log) => sum + (log.hours * log.wage), 0);
+            function sumHours(sum, log) { return sum + log.hours; }
+            function sumWages(sum, log) { return sum + (log.hours * log.wage); }
+            const totalHours = workLogs.reduce(sumHours, 0);
+            const totalWage = workLogs.reduce(sumWages, 0);
             document.getElementById('total-hours-value').innerText = totalHours.toFixed(1) + ' 天';
             document.getElementById('total-wage-value').innerText = totalWage.toFixed(2) + ' 元';
             const monthlyData = {};
-            workLogs.forEach(log => {
+            function accumulateMonthlyData(log) {
                 const month = new Date(log.date).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit' });
                 if (!monthlyData[month]) monthlyData[month] = { hours: 0, wage: 0 };
                 monthlyData[month].hours += log.hours;
                 monthlyData[month].wage += log.hours * log.wage;
-            });
+            }
+            workLogs.forEach(accumulateMonthlyData);
             const monthlyContainer = document.getElementById('monthly-hours');
             monthlyContainer.innerHTML = '';
             if (Object.keys(monthlyData).length === 0) {
                 monthlyContainer.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">暂无月度数据</div>';
             } else {
-                Object.entries(monthlyData).sort((a,b)=>b[0].localeCompare(a[0])).forEach(([month, data]) => {
-                    const row = document.createElement('div'); row.className = 'summary-row';
-                    row.innerHTML = `<span class="summary-label">${month}</span><span class="summary-value">${data.hours.toFixed(1)}天 / ${data.wage.toFixed(2)}元</span>`;
+                function compareMonthDesc(a, b) { return b[0].localeCompare(a[0]); }
+                function renderMonthlyRow(entry) {
+                    const month = entry[0];
+                    const data = entry[1];
+                    const row = document.createElement('div');
+                    row.className = 'summary-row';
+                    row.innerHTML = '<span class="summary-label">' + month + '</span><span class="summary-value">' + data.hours.toFixed(1) + '天 / ' + data.wage.toFixed(2) + '元</span>';
                     monthlyContainer.appendChild(row);
-                });
+                }
+                Object.entries(monthlyData).sort(compareMonthDesc).forEach(renderMonthlyRow);
             }
         }
 
-        // ================== 日历核心（在记录页） ==================
+        // ============================================================
+        // 日历渲染模块
+        // ============================================================
         function renderCalendarView() {
             const container = document.getElementById('table-calendar-days-container');
             const titleEl = document.getElementById('table-calendar-month-year');
             const year = currentDisplayYear;
             const month = currentDisplayMonth;
-            titleEl.innerText = `${year}年${month+1}月`;
+            titleEl.innerText = year + '年' + (month + 1) + '月';
 
             const firstDay = new Date(year, month, 1);
-            let startDayOfWeek = firstDay.getDay(); // 0周日
-            startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1; // 周一=0
+            let startDayOfWeek = firstDay.getDay();
+            startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
-            const daysInMonth = new Date(year, month+1, 0).getDate();
-            
-            // 构建日期 -> 记录映射
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
             const recordMap = new Map();
-            workLogs.forEach(log => { recordMap.set(log.date, log); });
+            function buildRecordMap(log) { recordMap.set(log.date, log); }
+            workLogs.forEach(buildRecordMap);
 
-            // 使用本地时间获取日期字符串
             const now = new Date();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+            const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
             container.innerHTML = '';
-            
-            // 前置空白
+
             for (let i = 0; i < startDayOfWeek; i++) {
                 const emptyDiv = document.createElement('div');
                 emptyDiv.className = 'calendar-day';
                 emptyDiv.style.cssText = 'opacity:0.4; background:transparent; box-shadow:none;';
                 container.appendChild(emptyDiv);
             }
-            
-            // 日期格子
+
             for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
                 const record = recordMap.get(dateStr);
                 const hasRecord = !!record;
                 const isToday = (dateStr === todayStr);
-                
+                const isPastRest = !hasRecord && (dateStr < todayStr);
+
                 const dayEl = document.createElement('div');
                 let classes = 'calendar-day';
-                if (!hasRecord) classes += ' no-record';
-                else classes += ' has-record';
+                if (hasRecord) classes += ' has-record';
+                else if (isPastRest) classes += ' past-rest';
+                else classes += ' no-record';
                 if (isToday) classes += ' today';
                 dayEl.className = classes;
                 dayEl.dataset.date = dateStr;
                 dayEl.dataset.hasRecord = hasRecord ? '1' : '0';
-                
-                let innerHtml = `<div class="day-number">${d}</div>`;
+                if (isPastRest) dayEl.dataset.pastRest = '1';
+
+                let innerHtml = '<div class="day-number">' + d + '</div>';
                 if (hasRecord) {
-                    innerHtml += `<div class="day-hours">${record.hours}天</div>`;
+                    innerHtml += '<div class="day-hours">' + record.hours + '天</div>';
                 }
                 dayEl.innerHTML = innerHtml;
-                
-                // 绑定长按/右键事件
+
                 bindDayEvents(dayEl, dateStr, record);
-                
                 container.appendChild(dayEl);
             }
         }
 
-        // 显示工资浮动提示
-        function showWageTooltip(element, record) {
-            hideWageTooltip(); // 先关闭已有的
-            if (!record) return;
+        // ============================================================
+        // 浮动提示模块
+        // ============================================================
+        function showWageTooltip(element, record, isRest, dateStr) {
+            hideWageTooltip();
+            if (!record && !isRest) return;
 
             const tooltip = document.createElement('div');
             tooltip.className = 'day-wage-tooltip';
-            const totalWage = (record.hours * record.wage).toFixed(2);
-            tooltip.innerHTML = `
-                <div class="tooltip-date">${formatDateFull(record.date)}</div>
-                <div class="tooltip-row"><span class="tooltip-label">工时</span><span class="tooltip-value">${record.hours} 天</span></div>
-                <div class="tooltip-row"><span class="tooltip-label">日薪</span><span class="tooltip-value">${record.wage} 元</span></div>
-                <div class="tooltip-row tooltip-total"><span class="tooltip-label">当日工资</span><span class="tooltip-value">${totalWage} 元</span></div>
-            `;
+
+            if (isRest) {
+                tooltip.innerHTML = '<div class="tooltip-date">' + formatDateFull(dateStr) + '</div>' +
+                    '<div class="tooltip-row" style="justify-content:center;padding:4px 0;">' +
+                    '<span class="tooltip-value" style="color:var(--danger-color);font-size:15px;">' +
+                    '<img src="https://api.iconify.design/noto-v1:carp-streamer.svg" width="16" height="16" style="vertical-align:middle;margin-right:4px;" alt=""> 休息</span></div>';
+            } else {
+                const totalWage = (record.hours * record.wage).toFixed(2);
+                tooltip.innerHTML = '<div class="tooltip-date">' + formatDateFull(record.date) + '</div>' +
+                    '<div class="tooltip-row"><span class="tooltip-label">工时</span><span class="tooltip-value">' + record.hours + ' 天</span></div>' +
+                    '<div class="tooltip-row"><span class="tooltip-label">日薪</span><span class="tooltip-value">' + record.wage + ' 元</span></div>' +
+                    '<div class="tooltip-row tooltip-total"><span class="tooltip-label">当日工资</span><span class="tooltip-value">' + totalWage + ' 元</span></div>';
+            }
             element.style.position = 'relative';
             element.appendChild(tooltip);
             activeWageTooltip = tooltip;
 
-            // 先强制渲染一帧，获取实际尺寸后再做边界判断
-            requestAnimationFrame(() => {
+            function adjustTooltipPosition() {
                 const rect = tooltip.getBoundingClientRect();
                 const padding = 8;
                 let needsBottom = false;
-                let offsetX = -50; // 默认 translateX(-50%)
+                let offsetX = -50;
 
-                // 1. 检查上方空间是否足够，不够则改为显示在下方
                 if (rect.top < padding) {
                     needsBottom = true;
                     tooltip.classList.add('position-bottom');
                 }
 
-                // 2. 检查左右是否超出视口，调整水平偏移
                 if (rect.left < padding) {
                     const shift = Math.abs(rect.left) + padding;
                     offsetX = -50 + (shift / rect.width * 100);
@@ -1280,37 +1373,33 @@
                     offsetX = -50 - (shift / rect.width * 100);
                 }
 
-                // 应用水平偏移
                 if (offsetX !== -50) {
-                    tooltip.style.transform = `translateX(${offsetX}%) scale(0.9)`;
+                    tooltip.style.transform = 'translateX(' + offsetX + '%) scale(0.9)';
                 }
 
-                // 3. 创建独立的箭头元素（放在日期格子内部，始终指向格子中心）
                 const arrow = document.createElement('div');
                 arrow.className = 'wage-tooltip-arrow ' + (needsBottom ? 'arrow-top' : 'arrow-bottom');
                 element.appendChild(arrow);
                 tooltip._arrow = arrow;
 
-                // 边界调整完成后再触发动画显示
-                requestAnimationFrame(() => {
+                function animateTooltipIn() {
                     tooltip.classList.add('show');
                     if (offsetX !== -50) {
-                        tooltip.style.transform = `translateX(${offsetX}%) scale(1)`;
+                        tooltip.style.transform = 'translateX(' + offsetX + '%) scale(1)';
                     }
-                });
-            });
+                }
+                requestAnimationFrame(animateTooltipIn);
+            }
+            requestAnimationFrame(adjustTooltipPosition);
 
-            // 5秒后自动关闭
-            tooltip._autoHideTimer = setTimeout(() => hideWageTooltip(), 5000);
+            tooltip._autoHideTimer = setTimeout(function autoHideTooltip() { hideWageTooltip(); }, 5000);
         }
 
-        // 隐藏工资浮动提示
         function hideWageTooltip() {
             if (activeWageTooltip) {
                 if (activeWageTooltip._autoHideTimer) {
                     clearTimeout(activeWageTooltip._autoHideTimer);
                 }
-                // 同时移除独立箭头
                 if (activeWageTooltip._arrow) {
                     activeWageTooltip._arrow.remove();
                 }
@@ -1319,151 +1408,194 @@
             }
         }
 
-        // 绑定日期格子的事件（长按和右键）
-        function bindDayEvents(element, dateStr, record) {
-            // 触摸长按事件
-            element.addEventListener('touchstart', (e) => {
-                longPressTarget = element;
-                element.classList.add('pressing');
-                longPressTimer = setTimeout(() => {
-                    element.classList.remove('pressing');
-                    longPressTimer = null;
-                    if (record) {
-                        hideWageTooltip(); // 长按前先关闭工资提示
-                        showContextMenu(e.touches[0].clientX, e.touches[0].clientY, dateStr, record);
-                    } else {
-                        showToast('该日期暂无记录');
-                    }
-                }, LONG_PRESS_DURATION);
-            }, { passive: true });
-            
-            element.addEventListener('touchend', (e) => {
+        // ============================================================
+        // 日历格子事件绑定模块
+        // ============================================================
+        function getDayRecordFromElement(element) {
+            const dateStr = element.dataset.date;
+            if (element.dataset.hasRecord !== '1') return null;
+            return workLogs.find(function findLogByDate(l) { return l.date === dateStr; });
+        }
+
+        function handleDayTouchStart(event) {
+            const element = event.currentTarget;
+            const isPastRest = element.dataset.pastRest === '1';
+            const record = getDayRecordFromElement(element);
+            longPressTarget = element;
+            element.classList.add('pressing');
+
+            function handleLongPress() {
                 element.classList.remove('pressing');
-                if (longPressTimer) {
-                    // 计时器还在，说明是短按
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                    // 短按：有记录则显示工资提示，无记录提示暂无记录
-                    if (record) {
-                        showWageTooltip(element, record);
-                    } else {
-                        showToast('该日期暂无记录');
-                    }
-                }
-                longPressTarget = null;
-            }, { passive: true });
-            
-            element.addEventListener('touchmove', (e) => {
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-                element.classList.remove('pressing');
-                longPressTarget = null;
-            }, { passive: true });
-            
-            element.addEventListener('touchcancel', (e) => {
-                element.classList.remove('pressing');
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-                longPressTarget = null;
-            }, { passive: true });
-            
-            // 鼠标右键事件（桌面端）
-            element.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                if (record) {
-                    showContextMenu(e.clientX, e.clientY, dateStr, record);
+                longPressTimer = null;
+                if (isPastRest) {
+                    return;
+                } else if (record) {
+                    hideWageTooltip();
+                    showContextMenu(event.touches[0].clientX, event.touches[0].clientY, element.dataset.date, record);
                 } else {
                     showToast('该日期暂无记录');
                 }
-            });
-            
-            // 鼠标长按事件（桌面端）
-            element.addEventListener('mousedown', (e) => {
-                if (e.button !== 0) return; // 只处理左键
-                longPressTarget = element;
-                element.classList.add('pressing');
-                longPressTimer = setTimeout(() => {
-                    element.classList.remove('pressing');
-                    longPressTimer = null;
-                    if (record) {
-                        hideWageTooltip(); // 长按前先关闭工资提示
-                        showContextMenu(e.clientX, e.clientY, dateStr, record);
-                    } else {
-                        showToast('该日期暂无记录');
-                    }
-                }, LONG_PRESS_DURATION);
-            });
-            
-            element.addEventListener('mouseup', (e) => {
-                element.classList.remove('pressing');
-                if (longPressTimer) {
-                    // 计时器还在，说明是短按
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                    if (record) {
-                        showWageTooltip(element, record);
-                    } else {
-                        showToast('该日期暂无记录');
-                    }
-                }
-                longPressTarget = null;
-            });
-            
-            element.addEventListener('mouseleave', (e) => {
-                element.classList.remove('pressing');
-                if (longPressTimer) {
-                    clearTimeout(longPressTimer);
-                    longPressTimer = null;
-                }
-                longPressTarget = null;
-            });
+            }
+            longPressTimer = setTimeout(handleLongPress, LONG_PRESS_DURATION);
         }
 
-        // 显示上下文菜单
+        function handleDayTouchEnd(event) {
+            const element = event.currentTarget;
+            const isPastRest = element.dataset.pastRest === '1';
+            const record = getDayRecordFromElement(element);
+            element.classList.remove('pressing');
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+                if (record) {
+                    showWageTooltip(element, record);
+                } else if (isPastRest) {
+                    showWageTooltip(element, null, true, element.dataset.date);
+                } else {
+                    showToast('该日期暂无记录');
+                }
+            }
+            longPressTarget = null;
+        }
+
+        function handleDayTouchMove() {
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            if (longPressTarget) {
+                longPressTarget.classList.remove('pressing');
+            }
+            longPressTarget = null;
+        }
+
+        function handleDayTouchCancel() {
+            if (longPressTarget) {
+                longPressTarget.classList.remove('pressing');
+            }
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            longPressTarget = null;
+        }
+
+        function handleDayContextMenu(event) {
+            event.preventDefault();
+            const element = event.currentTarget;
+            const isPastRest = element.dataset.pastRest === '1';
+            if (isPastRest) return;
+            const record = getDayRecordFromElement(element);
+            if (record) {
+                showContextMenu(event.clientX, event.clientY, element.dataset.date, record);
+            } else {
+                showToast('该日期暂无记录');
+            }
+        }
+
+        function handleDayMouseDown(event) {
+            if (event.button !== 0) return;
+            const element = event.currentTarget;
+            const isPastRest = element.dataset.pastRest === '1';
+            if (isPastRest) return;
+            const record = getDayRecordFromElement(element);
+            longPressTarget = element;
+            element.classList.add('pressing');
+
+            function handleMouseLongPress() {
+                element.classList.remove('pressing');
+                longPressTimer = null;
+                if (record) {
+                    hideWageTooltip();
+                    showContextMenu(event.clientX, event.clientY, element.dataset.date, record);
+                } else {
+                    showToast('该日期暂无记录');
+                }
+            }
+            longPressTimer = setTimeout(handleMouseLongPress, LONG_PRESS_DURATION);
+        }
+
+        function handleDayMouseUp(event) {
+            const element = event.currentTarget;
+            const isPastRest = element.dataset.pastRest === '1';
+            const record = getDayRecordFromElement(element);
+            element.classList.remove('pressing');
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+                if (record) {
+                    showWageTooltip(element, record);
+                } else if (isPastRest) {
+                    showWageTooltip(element, null, true, element.dataset.date);
+                } else {
+                    showToast('该日期暂无记录');
+                }
+            }
+            longPressTarget = null;
+        }
+
+        function handleDayMouseLeave() {
+            if (longPressTarget) {
+                longPressTarget.classList.remove('pressing');
+            }
+            if (longPressTimer) {
+                clearTimeout(longPressTimer);
+                longPressTimer = null;
+            }
+            longPressTarget = null;
+        }
+
+        function bindDayEvents(element, dateStr, record) {
+            element.dataset.date = dateStr;
+            if (record) {
+                element.dataset.hasRecord = '1';
+                element.dataset.hours = record.hours;
+                element.dataset.wage = record.wage;
+                if (record.content) element.dataset.content = '1';
+            }
+            element.addEventListener('touchstart', handleDayTouchStart, { passive: true });
+            element.addEventListener('touchend', handleDayTouchEnd, { passive: true });
+            element.addEventListener('touchmove', handleDayTouchMove, { passive: true });
+            element.addEventListener('touchcancel', handleDayTouchCancel, { passive: true });
+            element.addEventListener('contextmenu', handleDayContextMenu);
+            element.addEventListener('mousedown', handleDayMouseDown);
+            element.addEventListener('mouseup', handleDayMouseUp);
+            element.addEventListener('mouseleave', handleDayMouseLeave);
+        }
+
+        // ============================================================
+        // 上下文菜单模块
+        // ============================================================
         function showContextMenu(x, y, dateStr, record) {
             contextMenuDate = dateStr;
             contextMenuRecord = record;
-            
             const menu = document.getElementById('context-menu');
             const overlay = document.getElementById('context-menu-overlay');
-            
-            // 根据是否有工作内容显示/隐藏查看按钮
             const viewBtn = document.getElementById('menu-view');
             if (record && record.content) {
                 viewBtn.style.display = 'flex';
             } else {
                 viewBtn.style.display = 'none';
             }
-            
             overlay.style.display = 'block';
             menu.style.display = 'flex';
-            
-            // 计算菜单位置，确保不超出视口
+
             const menuWidth = 160;
             const menuHeight = record && record.content ? 150 : 110;
-            
             let posX = x;
             let posY = y;
-            
             if (posX + menuWidth > window.innerWidth - 10) {
                 posX = window.innerWidth - menuWidth - 10;
             }
             if (posX < 10) posX = 10;
-            
             if (posY + menuHeight > window.innerHeight - 10) {
                 posY = window.innerHeight - menuHeight - 10;
             }
             if (posY < 10) posY = 10;
-            
             menu.style.left = posX + 'px';
             menu.style.top = posY + 'px';
         }
 
-        // 隐藏上下文菜单
         function hideContextMenu() {
             document.getElementById('context-menu').style.display = 'none';
             document.getElementById('context-menu-overlay').style.display = 'none';
@@ -1471,71 +1603,22 @@
             contextMenuRecord = null;
         }
 
-        // 处理菜单操作
         function handleMenuAction(action) {
             if (!contextMenuDate) return;
-            // 先保存日期，因为 hideContextMenu 会清除它
             const targetDate = contextMenuDate;
             hideContextMenu();
-            
-            switch(action) {
-                case 'view':
-                    showContent(targetDate);
-                    break;
-                case 'edit':
-                    openEditModal(targetDate);
-                    break;
-                case 'delete':
-                    showDeleteConfirm(targetDate);
-                    break;
+            if (action === 'view') {
+                showContent(targetDate);
+            } else if (action === 'edit') {
+                openEditModal(targetDate);
+            } else if (action === 'delete') {
+                showDeleteConfirm(targetDate);
             }
         }
 
-        // 打开编辑模态框
-        function openEditModal(dateStr) {
-            const log = workLogs.find(l => l.date === dateStr);
-            if (!log) return;
-            
-            document.getElementById('edit-date').value = log.date;
-            document.getElementById('edit-date-display').value = formatDateFull(log.date);
-            document.getElementById('edit-hours').value = log.hours;
-            document.getElementById('edit-wage').value = log.wage;
-            document.getElementById('edit-content').value = log.content || '';
-            
-            document.getElementById('edit-modal').style.display = 'flex';
-        }
-
-        // 关闭编辑模态框
-        function closeEditModal() {
-            document.getElementById('edit-modal').style.display = 'none';
-        }
-
-        // 保存编辑
-        async function saveEdit() {
-            const date = document.getElementById('edit-date').value;
-            const hours = parseFloat(document.getElementById('edit-hours').value);
-            const wage = parseFloat(document.getElementById('edit-wage').value);
-            const content = document.getElementById('edit-content').value.trim();
-            
-            if (!date) { showToast("日期无效"); return; }
-            if (hours < 0 || isNaN(hours)) { showToast("请输入有效的工时数值"); return; }
-            if (wage < 0 || isNaN(wage)) { showToast("请输入有效的工资数值"); return; }
-            
-            const index = workLogs.findIndex(log => log.date === date);
-            if (index === -1) { showToast('记录不存在'); closeEditModal(); return; }
-            
-            workLogs[index] = { date, content, hours, wage };
-            sortWorkLogs();
-            localStorage.setItem('workLogs', JSON.stringify(workLogs));
-            
-            updateSummary();
-            renderCalendarView();
-            closeEditModal();
-            showToast('记录已更新');
-            await triggerAutoSync();
-        }
-
-        // 月份切换
+        // ============================================================
+        // 导航与工具模块
+        // ============================================================
         function changeMonth(delta) {
             currentDisplayMonth += delta;
             if (currentDisplayMonth < 0) { currentDisplayMonth = 11; currentDisplayYear--; }
@@ -1544,37 +1627,50 @@
         }
 
         function switchPage(pageId) {
-            hideWageTooltip(); // 页面切换时关闭工资提示
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            hideWageTooltip();
+            function deactivatePage(p) { p.classList.remove('active'); }
+            function deactivateNav(btn) { btn.classList.remove('active'); }
+            function findNavForPage(btn) {
+                var onclick = btn.getAttribute('onclick');
+                return onclick && onclick.indexOf("'" + pageId + "'") !== -1;
+            }
+            document.querySelectorAll('.page').forEach(deactivatePage);
             document.getElementById(pageId).classList.add('active');
-            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = Array.from(document.querySelectorAll('.nav-button')).find(btn => btn.getAttribute('onclick')?.includes(`'${pageId}'`));
+            document.querySelectorAll('.nav-button').forEach(deactivateNav);
+            var activeBtn = Array.from(document.querySelectorAll('.nav-button')).find(findNavForPage);
             if (activeBtn) activeBtn.classList.add('active');
-            
             if (pageId === 'table-page') renderCalendarView();
             else if (pageId === 'summary-page') updateSummary();
             window.scrollTo(0, 0);
         }
 
         function exportData() {
-            const data = { workLogs, lastWage, lastHours };
+            const data = { workLogs: workLogs, lastWage: lastWage, lastHours: lastHours };
             const jsonString = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url;
-            a.download = `工作记录_${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a); a.click();
-            setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 100);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '工作记录_' + new Date().toISOString().split('T')[0] + '.json';
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(function revokeUrlTimer() { URL.revokeObjectURL(url); document.body.removeChild(a); }, 100);
             showToast('数据已导出');
         }
+
         function importData() {
-            const input = document.createElement('input'); input.type = 'file'; input.accept = '.json,application/json';
-            input.onchange = function(e) {
-                const file = e.target.files[0]; if (!file) return;
-                const reader = new FileReader();
-                reader.onload = async function(ev) {
+            var importInput = document.createElement('input');
+            importInput.type = 'file';
+            importInput.accept = '.json,application/json';
+
+            function handleImportFileSelect(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+
+                async function handleImportLoad(ev) {
                     try {
-                        const imported = JSON.parse(ev.target.result);
+                        var imported = JSON.parse(ev.target.result);
                         if (!imported.workLogs || !Array.isArray(imported.workLogs)) throw new Error('格式错误');
                         workLogs = imported.workLogs;
                         lastWage = imported.lastWage || null;
@@ -1589,47 +1685,65 @@
                         showToast('导入成功');
                         await triggerAutoSync();
                     } catch (err) { showToast('导入失败'); }
-                };
+                }
+                reader.onload = handleImportLoad;
                 reader.readAsText(file);
-            };
-            input.click();
+            }
+            importInput.onchange = handleImportFileSelect;
+            importInput.click();
         }
 
-        window.onload = () => {
+        // ============================================================
+        // 全局事件绑定
+        // ============================================================
+        function initApp() {
             loadGithubConfig();
-            clearForm(); sortWorkLogs();
+            clearForm();
+            sortWorkLogs();
             updateSummary();
-            // 初始化日历为当前年月
-            const today = new Date();
+            var today = new Date();
             currentDisplayYear = today.getFullYear();
             currentDisplayMonth = today.getMonth();
             switchPage('add-page');
-            // 延迟设置日期，确保浏览器已完全渲染 date input
-            setTimeout(() => setDefaultDate(), 50);
-        };
-        window.addEventListener('visibilitychange', () => { if (!document.hidden) setDefaultDate(); });
-        document.getElementById('delete-confirm').addEventListener('click', function(e) { if (e.target === this) cancelDelete(); });
-        document.getElementById('delete-all-confirm').addEventListener('click', function(e) { if (e.target === this) cancelDeleteAll(); });
-        document.getElementById('edit-modal').addEventListener('click', function(e) { if (e.target === this) closeEditModal(); });
-        document.addEventListener('keydown', (e) => { 
-            if (e.key === 'Escape') { 
-                cancelDelete(); 
-                cancelDeleteAll(); 
+            setTimeout(function delayedSetDate() { setDefaultDate(); }, 50);
+        }
+        window.onload = initApp;
+
+        function handleVisibilityChange() {
+            if (!document.hidden) setDefaultDate();
+        }
+        window.addEventListener('visibilitychange', handleVisibilityChange);
+
+        function handleDeleteOverlayClick(e) { if (e.target === this) cancelDelete(); }
+        document.getElementById('delete-confirm').addEventListener('click', handleDeleteOverlayClick);
+
+        function handleDeleteAllOverlayClick(e) { if (e.target === this) cancelDeleteAll(); }
+        document.getElementById('delete-all-confirm').addEventListener('click', handleDeleteAllOverlayClick);
+
+        function handleEditOverlayClick(e) { if (e.target === this) closeEditModal(); }
+        document.getElementById('edit-modal').addEventListener('click', handleEditOverlayClick);
+
+        function handleKeydown(e) {
+            if (e.key === 'Escape') {
+                cancelDelete();
+                cancelDeleteAll();
                 closeEditModal();
                 hideContextMenu();
-            } 
-        });
-        
-        // 滚动时隐藏上下文菜单和工资提示
-        window.addEventListener('scroll', () => { hideContextMenu(); hideWageTooltip(); }, { passive: true });
-        window.addEventListener('resize', () => { hideContextMenu(); hideWageTooltip(); }, { passive: true });
+            }
+        }
+        document.addEventListener('keydown', handleKeydown);
 
-        // 点击页面其他地方关闭工资提示（但不阻止日期格子的点击事件）
-        document.addEventListener('click', (e) => {
+        function handleWindowScroll() { hideContextMenu(); hideWageTooltip(); }
+        function handleWindowResize() { hideContextMenu(); hideWageTooltip(); }
+        window.addEventListener('scroll', handleWindowScroll, { passive: true });
+        window.addEventListener('resize', handleWindowResize, { passive: true });
+
+        function handleDocumentClick(e) {
             if (!e.target.closest('.calendar-day') && activeWageTooltip) {
                 hideWageTooltip();
             }
-        });
+        }
+        document.addEventListener('click', handleDocumentClick);
     </script>
 </body>
 </html>
