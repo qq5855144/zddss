@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -167,10 +168,7 @@
             transition: all 0.3s ease;
             box-shadow: 4px 4px 8px var(--dark-shadow), -4px -4px 8px var(--light-shadow);
         }
-        button:hover, button:active {
-            box-shadow: 2px 2px 4px var(--dark-shadow), -2px -2px 4px var(--light-shadow);
-            transform: translateY(2px);
-        }
+        
         .add-button {
             background-color: var(--primary-color) !important;
             color: white !important;
@@ -197,13 +195,33 @@
             font-size: 16px;
         }
         .calendar-nav button {
-            padding: 6px 12px;
-            margin: 0 2px;
-            font-size: 16px;
-            box-shadow: 3px 3px 6px var(--dark-shadow), -3px -3px 6px var(--light-shadow);
-            background: var(--bg-color);
-            border-radius: 12px;
-        }
+    padding: 0;
+    margin: 0 2px;
+    width: 32px;
+    height: 32px;
+    box-shadow: 3px 3px 6px var(--dark-shadow), -3px -3px 6px var(--light-shadow);
+    background: var(--bg-color);
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    cursor: pointer;
+    transform: none;
+}
+
+.calendar-nav button:active {
+    transform: none;
+    box-shadow: 3px 3px 6px var(--dark-shadow), -3px -3px 6px var(--light-shadow);
+}
+
+.calendar-nav button img {
+    display: block;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    vertical-align: middle;
+}
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
@@ -751,8 +769,8 @@
             <div class="calendar-header">
                 <span class="calendar-title" id="table-calendar-month-year">2026年4月</span>
                 <div class="calendar-nav">
-                    <button onclick="changeMonth(-1)"><img src="https://api.iconify.design/gravity-ui:triangle-left-fill.svg?color=%236D5B98" width="20" height="20" alt=""></button>
-                    <button onclick="changeMonth(1)"><img src="https://api.iconify.design/gravity-ui:triangle-right-fill.svg?color=%236D5B98" width="20" height="20" alt=""></button>
+                    <button onclick="changeMonth(-1)"><img src="https://api.iconify.design/il:arrow-left.svg?color=%236D5B98" width="20" height="20" alt=""></button>
+                    <button onclick="changeMonth(1)"><img src="https://api.iconify.design/il:arrow-right.svg?color=%236D5B98" width="20" height="20" alt=""></button>
                 </div>
             </div>
             <div class="calendar-grid" id="table-calendar-weekdays">
