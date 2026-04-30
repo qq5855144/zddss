@@ -3,7 +3,7 @@
     {
       "date": "2026-04-30",
       "content": "",
-      "hours": 1,
+      "hours": 1.5,
       "wage": 320
     },
     {
@@ -278,7 +278,7 @@
     }
   ],
   "lastWage": 320,
-  "lastHours": 1,
+  "lastHours": 1.5,
   "version": "1.0",
-  "timestamp": "2026-04-30T09:06:54.086Z"
+  "timestamp": "2026-04-30T09:07:05.652Z"
 }
