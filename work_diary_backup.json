@@ -1,6 +1,12 @@
 {
   "workLogs": [
     {
+      "date": "2026-05-11",
+      "content": "",
+      "hours": 1,
+      "wage": 320
+    },
+    {
       "date": "2026-05-10",
       "content": "",
       "hours": 1.5,
@@ -338,7 +344,7 @@
     }
   ],
   "lastWage": 320,
-  "lastHours": 1.5,
+  "lastHours": 1,
   "version": "1.0",
-  "timestamp": "2026-05-10T23:02:42.685Z"
+  "timestamp": "2026-05-10T23:02:48.075Z"
 }
