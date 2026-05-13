@@ -1,42 +1,22 @@
 {
-  "$schema": "https://json.schemastore.org/work-diary-1.0",
-  "metadata": {
-    "version": "1.1",
-    "generatedAt": "2026-05-12T11:09:19.069Z",
-    "description": "工作日记数据备份，包含每日工时和薪资记录"
-  },
   "workLogs": [
     {
       "date": "2026-05-12",
       "content": "",
       "hours": 1,
-      "wage": 320,
-      "notes": "默认薪资标准"
+      "wage": 320
     },
     {
       "date": "2026-05-11",
       "content": "",
       "hours": 1.5,
-      "wage": 320,
-      "notes": "加班0.5小时"
+      "wage": 320
     },
     {
       "date": "2026-05-10",
       "content": "",
       "hours": 1.5,
-      "wage": 320,
-      "notes": "加班0.5小时"
+      "wage": 320
     }
-    // ... 其余记录保持原格式
-  ],
-  "statistics": {
-    "lastWage": 320,
-    "lastHours": 1,
-    "totalDays": 350,
-    "avgHoursPerDay": 1.2
-  },
-  "validation": {
-    "checksum": "a1b2c3d4",
-    "recordCount": 350
-  }
+  ]
 }
