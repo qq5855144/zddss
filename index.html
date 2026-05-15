@@ -993,7 +993,41 @@
         let lastOvertimeRate = parseFloat(localStorage.getItem('lastOvertimeRate')) || null;
 
         // 浮动提示状态
+        // 浮动提示状态
         let activeWageTooltip = null;
+
+        // ============================================================
+        // 模式切换模块
+        // ============================================================
+        function switchMode(mode) {
+            currentMode = mode;
+            localStorage.setItem('currentMode', mode);
+            const dayBtn = document.getElementById('mode-day-btn');
+            const hourBtn = document.getElementById('mode-hour-btn');
+            const dayInputs = document.getElementById('day-mode-inputs');
+            const hourInputs = document.getElementById('hour-mode-inputs');
+            if (mode === 'day') {
+                dayBtn.classList.add('active');
+                hourBtn.classList.remove('active');
+                dayInputs.classList.add('active');
+                hourInputs.classList.remove('active');
+            } else {
+                hourBtn.classList.add('active');
+                dayBtn.classList.remove('active');
+                hourInputs.classList.add('active');
+                dayInputs.classList.remove('active');
+            }
+            clearForm();
+        }
+
+        function initMode() {
+            if (currentMode === 'hour') {
+                document.getElementById('mode-hour-btn').classList.add('active');
+                document.getElementById('mode-day-btn').classList.remove('active');
+                document.getElementById('hour-mode-inputs').classList.add('active');
+                document.getElementById('day-mode-inputs').classList.remove('active');
+            }
+        }
 
         // ============================================================
         // GitHub 配置模块
@@ -1295,39 +1329,28 @@
         }
 
         function cancelDeleteAll() { document.getElementById('delete-all-confirm').style.display = 'none'; }
-
-        // ============================================================
-        // 内容展示与编辑模块
-        // ============================================================
-        function showContent(dateOrIndex) {
-            let log;
-            if (typeof dateOrIndex === 'number') {
-                log = workLogs[dateOrIndex];
-            } else {
-                log = workLogs.find(function matchDateOrIndex(l) { return l.date === dateOrIndex; });
-            }
-            if (!log || !log.content) return;
-            const overlay = document.createElement('div');
-            overlay.className = 'modal-overlay';
-            overlay.onclick = function handleOverlayClick(e) { if (e.target === overlay) overlay.remove(); };
-            const modal = document.createElement('div');
-            modal.className = 'modal-content';
-            modal.innerHTML = '<h3 class="modal-header">' + new Date(log.date).toLocaleDateString('zh-CN') + ' 工作详情</h3>' +
-                '<div class="modal-body">' + log.content.replace(/\n/g, '<br>') + '</div>' +
-                '<button class="modal-close" onclick="this.parentElement.parentElement.remove()">关闭</button>';
-            overlay.appendChild(modal);
-            document.body.appendChild(overlay);
-        }
-
         function openEditModal(dateStr) {
             function findByDateStr(l) { return l.date === dateStr; }
             const log = workLogs.find(findByDateStr);
             if (!log) return;
             document.getElementById('edit-date').value = log.date;
             document.getElementById('edit-date-display').value = formatDateFull(log.date);
-            document.getElementById('edit-hours').value = log.hours;
-            document.getElementById('edit-wage').value = log.wage;
             document.getElementById('edit-content').value = log.content || '';
+            const isDayMode = log.mode !== 'hour';
+            document.getElementById('edit-mode').value = isDayMode ? 'day' : 'hour';
+            if (isDayMode) {
+                document.getElementById('edit-day-mode-inputs').classList.add('active');
+                document.getElementById('edit-hour-mode-inputs').classList.remove('active');
+                document.getElementById('edit-hours').value = log.hours || '';
+                document.getElementById('edit-wage').value = log.wage || '';
+            } else {
+                document.getElementById('edit-day-mode-inputs').classList.remove('active');
+                document.getElementById('edit-hour-mode-inputs').classList.add('active');
+                document.getElementById('edit-hourly-rate').value = log.hourlyRate || '';
+                document.getElementById('edit-base-hours').value = log.baseHours || '';
+                document.getElementById('edit-overtime-hours').value = log.overtimeHours || 0;
+                document.getElementById('edit-overtime-rate').value = log.overtimeRate || 1.5;
+            }
             document.getElementById('edit-modal').style.display = 'flex';
         }
 
@@ -1337,16 +1360,31 @@
 
         async function saveEdit() {
             const date = document.getElementById('edit-date').value;
-            const hours = parseFloat(document.getElementById('edit-hours').value);
-            const wage = parseFloat(document.getElementById('edit-wage').value);
             const content = document.getElementById('edit-content').value.trim();
+            const mode = document.getElementById('edit-mode').value;
             if (!date) { showToast('日期无效'); return; }
-            if (hours < 0 || isNaN(hours)) { showToast('请输入有效的工时数值'); return; }
-            if (wage < 0 || isNaN(wage)) { showToast('请输入有效的工资数值'); return; }
             function findEditDate(log) { return log.date === date; }
             const index = workLogs.findIndex(findEditDate);
             if (index === -1) { showToast('记录不存在'); closeEditModal(); return; }
-            workLogs[index] = { date: date, content: content, hours: hours, wage: wage };
+            let updatedRecord;
+            if (mode === 'day') {
+                const hours = parseFloat(document.getElementById('edit-hours').value);
+                const wage = parseFloat(document.getElementById('edit-wage').value);
+                if (hours < 0 || isNaN(hours)) { showToast('请输入有效的工时数值'); return; }
+                if (wage < 0 || isNaN(wage)) { showToast('请输入有效的工资数值'); return; }
+                updatedRecord = { date: date, content: content, hours: hours, wage: wage, mode: 'day' };
+            } else {
+                const hourlyRate = parseFloat(document.getElementById('edit-hourly-rate').value);
+                const baseHours = parseFloat(document.getElementById('edit-base-hours').value);
+                const overtimeHours = parseFloat(document.getElementById('edit-overtime-hours').value) || 0;
+                const overtimeRate = parseFloat(document.getElementById('edit-overtime-rate').value) || 0;
+                if (hourlyRate < 0 || isNaN(hourlyRate)) { showToast('请输入有效的基础时薪'); return; }
+                if (baseHours < 0 || isNaN(baseHours)) { showToast('请输入有效的标准工时'); return; }
+                if (isNaN(overtimeHours) || overtimeHours < 0) { showToast('请输入有效的加班工时'); return; }
+                if (isNaN(overtimeRate) || overtimeRate < 0) { showToast('请输入有效的加班倍率'); return; }
+                updatedRecord = { date: date, content: content, hourlyRate: hourlyRate, baseHours: baseHours, overtimeHours: overtimeHours, overtimeRate: overtimeRate, mode: 'hour' };
+            }
+            workLogs[index] = updatedRecord;
             sortWorkLogs();
             localStorage.setItem('workLogs', JSON.stringify(workLogs));
             updateSummary();
@@ -1359,19 +1397,60 @@
         // ============================================================
         // 统计模块
         // ============================================================
+        function getRecordHours(log) {
+            if (log.mode === 'hour') return (log.baseHours || 0) + (log.overtimeHours || 0);
+            return log.hours || 0;
+        }
+        function getRecordWage(log) {
+            if (log.mode === 'hour') {
+                const baseWage = (log.hourlyRate || 0) * (log.baseHours || 0);
+                const overtimeWage = (log.hourlyRate || 0) * (log.overtimeHours || 0) * (log.overtimeRate || 0);
+                return baseWage + overtimeWage;
+            }
+            return (log.hours || 0) * (log.wage || 0);
+        }
+        function getRecordDisplayHours(log) {
+            if (log.mode === 'hour') {
+                const totalH = getRecordHours(log);
+                return totalH.toFixed(1) + 'h';
+            }
+            return (log.hours || 0).toFixed(1) + '天';
+        }
+        function getRecordDisplayWage(log) {
+            return getRecordWage(log).toFixed(2) + '元';
+        }
+
         function updateSummary() {
-            function sumHours(sum, log) { return sum + log.hours; }
-            function sumWages(sum, log) { return sum + (log.hours * log.wage); }
-            const totalHours = workLogs.reduce(sumHours, 0);
-            const totalWage = workLogs.reduce(sumWages, 0);
-            document.getElementById('total-hours-value').innerText = totalHours.toFixed(1) + ' 天';
+            let totalDayHours = 0, totalHourHours = 0, totalWage = 0;
+            function accumulateTotals(log) {
+                const wage = getRecordWage(log);
+                totalWage += wage;
+                if (log.mode === 'hour') {
+                    totalHourHours += getRecordHours(log);
+                } else {
+                    totalDayHours += (log.hours || 0);
+                }
+            }
+            workLogs.forEach(accumulateTotals);
+            let totalStr = '';
+            if (totalDayHours > 0) totalStr += totalDayHours.toFixed(1) + '天';
+            if (totalHourHours > 0) {
+                if (totalStr) totalStr += ' + ';
+                totalStr += totalHourHours.toFixed(1) + '小时';
+            }
+            if (!totalStr) totalStr = '0天';
+            document.getElementById('total-hours-value').innerText = totalStr;
             document.getElementById('total-wage-value').innerText = totalWage.toFixed(2) + ' 元';
             const monthlyData = {};
             function accumulateMonthlyData(log) {
                 const month = new Date(log.date).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit' });
-                if (!monthlyData[month]) monthlyData[month] = { hours: 0, wage: 0 };
-                monthlyData[month].hours += log.hours;
-                monthlyData[month].wage += log.hours * log.wage;
+                if (!monthlyData[month]) monthlyData[month] = { dayHours: 0, hourHours: 0, wage: 0 };
+                if (log.mode === 'hour') {
+                    monthlyData[month].hourHours += getRecordHours(log);
+                } else {
+                    monthlyData[month].dayHours += (log.hours || 0);
+                }
+                monthlyData[month].wage += getRecordWage(log);
             }
             workLogs.forEach(accumulateMonthlyData);
             const monthlyContainer = document.getElementById('monthly-hours');
@@ -1385,7 +1464,14 @@
                     const data = entry[1];
                     const row = document.createElement('div');
                     row.className = 'summary-row';
-                    row.innerHTML = '<span class="summary-label">' + month + '</span><span class="summary-value">' + data.hours.toFixed(1) + '天 / ' + data.wage.toFixed(2) + '元</span>';
+                    let hoursStr = '';
+                    if (data.dayHours > 0) hoursStr += data.dayHours.toFixed(1) + '天';
+                    if (data.hourHours > 0) {
+                        if (hoursStr) hoursStr += ' + ';
+                        hoursStr += data.hourHours.toFixed(1) + 'h';
+                    }
+                    if (!hoursStr) hoursStr = '0';
+                    row.innerHTML = '<span class="summary-label">' + month + '</span><span class="summary-value">' + hoursStr + ' / ' + data.wage.toFixed(2) + '元</span>';
                     monthlyContainer.appendChild(row);
                 }
                 Object.entries(monthlyData).sort(compareMonthDesc).forEach(renderMonthlyRow);
