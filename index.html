@@ -992,6 +992,19 @@
         let lastOvertimeHours = parseFloat(localStorage.getItem('lastOvertimeHours')) || null;
         let lastOvertimeRate = parseFloat(localStorage.getItem('lastOvertimeRate')) || null;
 
+        // 长按/上下文菜单状态
+        let longPressTarget = null;
+        let longPressTimer = null;
+        const LONG_PRESS_DURATION = 500;
+        let contextMenuDate = null;
+        let contextMenuRecord = null;
+
+        // 按时制上次使用值
+        let lastHourlyRate = parseFloat(localStorage.getItem('lastHourlyRate')) || null;
+        let lastBaseHours = parseFloat(localStorage.getItem('lastBaseHours')) || null;
+        let lastOvertimeHours = parseFloat(localStorage.getItem('lastOvertimeHours')) || null;
+        let lastOvertimeRate = parseFloat(localStorage.getItem('lastOvertimeRate')) || null;
+
         // 浮动提示状态
         // 浮动提示状态
         let activeWageTooltip = null;
