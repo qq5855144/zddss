@@ -1575,7 +1575,6 @@
                         '<div class="tooltip-row tooltip-total"><span class="tooltip-label">当日工资</span><span class="tooltip-value">' + totalWage + ' 元</span></div>';
                 }
             }
-            }
             element.style.position = 'relative';
             element.appendChild(tooltip);
             activeWageTooltip = tooltip;
@@ -1611,20 +1610,15 @@
                 function animateTooltipIn() {
                     tooltip.classList.add('show');
                     if (offsetX !== -50) {
-        function bindDayEvents(element, dateStr, record) {
-            element.dataset.date = dateStr;
-            if (record) {
-                element.dataset.hasRecord = '1';
-                element.dataset.mode = record.mode || 'day';
-                if (record.mode !== 'hour') {
-                    element.dataset.hours = record.hours;
-                    element.dataset.wage = record.wage;
-                } else {
-                    element.dataset.hours = getRecordHours(record);
-                    element.dataset.wage = getRecordWage(record);
+                        tooltip.style.transform = 'translateX(' + offsetX + '%) scale(1)';
+                    } else {
+                        tooltip.style.transform = 'translateX(-50%) scale(1)';
+                    }
                 }
-                if (record.content) element.dataset.content = '1';
+                requestAnimationFrame(function() { requestAnimationFrame(animateTooltipIn); });
             }
+            requestAnimationFrame(function() { requestAnimationFrame(adjustTooltipPosition); });
+        }
         // 日历格子事件绑定模块
         // ============================================================
         function getDayRecordFromElement(element) {
