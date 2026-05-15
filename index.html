@@ -180,6 +180,58 @@
             transform: translateY(2px);
         }
 
+        /* 模式切换按钮 */
+        .mode-switch-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .mode-switch-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 4px 4px 8px var(--dark-shadow), -4px -4px 8px var(--light-shadow);
+        }
+        .mode-switch-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: inset 3px 3px 6px rgba(0,0,0,0.2), inset -3px -3px 6px rgba(255,255,255,0.1);
+            transform: translateY(2px);
+        }
+        .mode-switch-btn:active:not(.active) {
+            box-shadow: inset 3px 3px 6px var(--dark-shadow), inset -3px -3px 6px var(--light-shadow);
+            transform: translateY(2px);
+        }
+        .mode-input-group {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .mode-input-group.active {
+            display: flex;
+        }
+        .overtime-row {
+            display: flex;
+            gap: 10px;
+        }
+        .overtime-row input {
+            flex: 1;
+        }
+        .overtime-label {
+            font-size: 12px;
+            color: var(--primary-color);
+            font-weight: 600;
+            margin-bottom: -6px;
+            margin-top: 4px;
+        }
+
         /* 日历卡片样式 */
         .calendar-header {
             display: flex;
@@ -739,11 +791,31 @@
     <!-- 添加记录页 -->
     <div id="add-page" class="page active">
         <div class="section-container">
+            <h1>📝 工作日记</h1>
             <div class="add-form">
+                <div class="mode-switch-group">
+                    <button class="mode-switch-btn active" id="mode-day-btn" onclick="switchMode('day')">📅 按天制</button>
+                    <button class="mode-switch-btn" id="mode-hour-btn" onclick="switchMode('hour')">⏰ 按时制</button>
+                </div>
                 <div class="input-row">
                     <input type="date" id="date-input" required title="请点击选择工作日期" onfocus="this.showPicker()">
+                </div>
+                <!-- 按天制输入区 -->
+                <div class="mode-input-group active" id="day-mode-inputs">
                     <input type="number" id="hours-input" min="0" step="0.5" placeholder="请输入工时（天）" title="按天计算（1天=8小时）" required>
                     <input type="number" id="wage-input" min="0" step="100" placeholder="请输入日工资（元）" title="请输入当日约定工资" required>
+                </div>
+                <!-- 按时制输入区 -->
+                <div class="mode-input-group" id="hour-mode-inputs">
+                    <input type="number" id="hourly-rate-input" min="0" step="10" placeholder="请输入基础时薪（元/小时）" title="标准工作时间的时薪" required>
+                    <input type="number" id="base-hours-input" min="0" step="0.5" placeholder="请输入标准工时（小时）" title="标准工作时间（如8小时）" required>
+                    <span class="overtime-label">⬇ 加班时段</span>
+                    <div class="overtime-row">
+                        <input type="number" id="overtime-hours-input" min="0" step="0.5" placeholder="加班工时（小时）" title="超出标准工时的加班时间" value="0">
+                        <input type="number" id="overtime-rate-input" min="1.0" step="0.1" placeholder="加班倍率" title="加班费倍率（如1.5表示1.5倍时薪）" value="1.5">
+                    </div>
+                </div>
+                <div class="input-row">
                     <input type="text" id="content-input" placeholder="工作内容（选填）：今天做了什么" title="请详细填写工作内容">
                 </div>
                 <button class="add-button" onclick="addWorkLog()">添加记录</button>
@@ -859,28 +931,40 @@
 
     <!-- 编辑模态框 -->
     <div class="delete-confirm" id="edit-modal" style="z-index: 1002;">
-        <div class="delete-confirm-content" style="max-width: 450px; text-align: left;">
-            <h3 style="text-align: center; color: var(--primary-color); margin-bottom: 15px;">编辑记录</h3>
-            <div class="edit-form-row">
+        <div class="modal-content">
+            <h3 class="modal-header">编辑记录</h3>
+            <div class="add-form">
                 <label>日期</label>
                 <input type="text" id="edit-date-display" readonly style="background: rgba(0,0,0,0.05); cursor: not-allowed;">
                 <input type="hidden" id="edit-date">
-            </div>
-            <div class="edit-form-row">
-                <label>工时（天）</label>
-                <input type="number" id="edit-hours" min="0" step="0.5" placeholder="请输入工时">
-            </div>
-            <div class="edit-form-row">
-                <label>日工资（元）</label>
-                <input type="number" id="edit-wage" min="0" step="100" placeholder="请输入日工资">
-            </div>
-            <div class="edit-form-row">
+                <input type="hidden" id="edit-mode">
+                <!-- 按天制编辑区 -->
+                <div class="mode-input-group active" id="edit-day-mode-inputs">
+                    <label>工时（天）</label>
+                    <input type="number" id="edit-hours" min="0" step="0.5" placeholder="请输入工时">
+                    <label>日工资（元）</label>
+                    <input type="number" id="edit-wage" min="0" step="100" placeholder="请输入日工资">
+                </div>
+                <!-- 按时制编辑区 -->
+                <div class="mode-input-group" id="edit-hour-mode-inputs">
+                    <label>基础时薪（元/小时）</label>
+                    <input type="number" id="edit-hourly-rate" min="0" step="10" placeholder="请输入时薪">
+                    <label>标准工时（小时）</label>
+                    <input type="number" id="edit-base-hours" min="0" step="0.5" placeholder="请输入标准工时">
+                    <label>加班工时（小时）</label>
+                    <input type="number" id="edit-overtime-hours" min="0" step="0.5" placeholder="请输入加班工时">
+                    <label>加班倍率</label>
+                    <input type="number" id="edit-overtime-rate" min="1.0" step="0.1" placeholder="请输入加班倍率">
+                </div>
                 <label>工作内容</label>
                 <textarea id="edit-content" placeholder="请输入工作内容"></textarea>
             </div>
             <div class="delete-confirm-buttons" style="margin-top: 15px;">
                 <button onclick="saveEdit()" class="add-button" style="background-color: var(--primary-color) !important; color: white !important;">保存</button>
                 <button onclick="closeEditModal()">取消</button>
+            </div>
+        </div>
+    </div>
             </div>
         </div>
     </div>
