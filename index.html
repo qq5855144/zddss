@@ -1181,21 +1181,42 @@
         async function addWorkLog() {
             const date = document.getElementById('date-input').value;
             const content = document.getElementById('content-input').value.trim();
-            const hours = parseFloat(document.getElementById('hours-input').value);
-            const wage = parseFloat(document.getElementById('wage-input').value);
             if (!date) { showToast('请选择日期！'); return; }
-            if (hours < 0 || isNaN(hours)) { showToast('请输入有效的工时数值'); return; }
-            if (wage < 0 || isNaN(wage)) { showToast('请输入有效的工资数值'); return; }
-            function findByDate(log) { return log.date === date; }
-            const existingIndex = workLogs.findIndex(findByDate);
+
+            let record;
+            if (currentMode === 'day') {
+                const hours = parseFloat(document.getElementById('hours-input').value);
+                const wage = parseFloat(document.getElementById('wage-input').value);
+                if (hours < 0 || isNaN(hours)) { showToast('请输入有效的工时数值'); return; }
+                if (wage < 0 || isNaN(wage)) { showToast('请输入有效的工资数值'); return; }
+                lastHours = hours; lastWage = wage;
+                localStorage.setItem('lastHours', hours);
+                localStorage.setItem('lastWage', wage);
+                record = { date: date, content: content, hours: hours, wage: wage, mode: 'day' };
+            } else {
+                const hourlyRate = parseFloat(document.getElementById('hourly-rate-input').value);
+                const baseHours = parseFloat(document.getElementById('base-hours-input').value);
+                const overtimeHours = parseFloat(document.getElementById('overtime-hours-input').value) || 0;
+                const overtimeRate = parseFloat(document.getElementById('overtime-rate-input').value) || 0;
+                if (hourlyRate < 0 || isNaN(hourlyRate)) { showToast('请输入有效的基础时薪'); return; }
+                if (baseHours < 0 || isNaN(baseHours)) { showToast('请输入有效的标准工时'); return; }
+                if (isNaN(overtimeHours) || overtimeHours < 0) { showToast('请输入有效的加班工时'); return; }
+                if (isNaN(overtimeRate) || overtimeRate < 0) { showToast('请输入有效的加班倍率'); return; }
+                lastHourlyRate = hourlyRate; lastBaseHours = baseHours;
+                lastOvertimeHours = overtimeHours; lastOvertimeRate = overtimeRate;
+                localStorage.setItem('lastHourlyRate', hourlyRate);
+                localStorage.setItem('lastBaseHours', baseHours);
+                localStorage.setItem('lastOvertimeHours', overtimeHours);
+                localStorage.setItem('lastOvertimeRate', overtimeRate);
+                record = { date: date, content: content, hourlyRate: hourlyRate, baseHours: baseHours, overtimeHours: overtimeHours, overtimeRate: overtimeRate, mode: 'hour' };
+            }
+
+            const existingIndex = workLogs.findIndex(function(l) { return l.date === date; });
             if (existingIndex !== -1) {
                 if (!confirm('该日期已有记录，是否覆盖？')) { showToast('已取消添加'); return; }
                 else workLogs.splice(existingIndex, 1);
             }
-            lastHours = hours; lastWage = wage;
-            localStorage.setItem('lastHours', hours);
-            localStorage.setItem('lastWage', wage);
-            workLogs.push({ date: date, content: content, hours: hours, wage: wage });
+            workLogs.push(record);
             sortWorkLogs();
             localStorage.setItem('workLogs', JSON.stringify(workLogs));
             updateSummary();
