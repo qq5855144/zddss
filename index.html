@@ -1901,7 +1901,8 @@
         }
 
         function exportData() {
-            const data = { workLogs: workLogs, lastWage: lastWage, lastHours: lastHours };
+        function exportData() {
+            const data = { workLogs: workLogs, lastWage: lastWage, lastHours: lastHours, lastHourlyRate: lastHourlyRate, lastBaseHours: lastBaseHours, lastOvertimeHours: lastOvertimeHours, lastOvertimeRate: lastOvertimeRate };
             const jsonString = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -1913,7 +1914,6 @@
             setTimeout(function revokeUrlTimer() { URL.revokeObjectURL(url); document.body.removeChild(a); }, 100);
             showToast('数据已导出');
         }
-
         function importData() {
             var importInput = document.createElement('input');
             importInput.type = 'file';
