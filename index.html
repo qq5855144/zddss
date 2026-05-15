@@ -1528,9 +1528,8 @@
 
                 let innerHtml = '<div class="day-number">' + d + '</div>';
                 if (hasRecord) {
-                    innerHtml += '<div class="day-hours">' + record.hours + '天</div>';
+                    innerHtml += '<div class="day-hours">' + getRecordDisplayHoursShort(record) + '</div>';
                 }
-                dayEl.innerHTML = innerHtml;
 
                 bindDayEvents(dayEl, dateStr, record);
                 container.appendChild(dayEl);
@@ -1553,11 +1552,23 @@
                     '<span class="tooltip-value" style="color:var(--danger-color);font-size:15px;">' +
                     '<img src="https://api.iconify.design/noto-v1:carp-streamer.svg" width="16" height="16" style="vertical-align:middle;margin-right:4px;" alt="">咸鱼</span></div>';
             } else {
-                const totalWage = (record.hours * record.wage).toFixed(2);
-                tooltip.innerHTML = '<div class="tooltip-date">' + formatDateFull(record.date) + '</div>' +
-                    '<div class="tooltip-row"><span class="tooltip-label">工时</span><span class="tooltip-value">' + record.hours + ' 天</span></div>' +
-                    '<div class="tooltip-row"><span class="tooltip-label">日薪</span><span class="tooltip-value">' + record.wage + ' 元</span></div>' +
-                    '<div class="tooltip-row tooltip-total"><span class="tooltip-label">当日工资</span><span class="tooltip-value">' + totalWage + ' 元</span></div>';
+                if (record.mode === 'hour') {
+                    const baseWage = (record.hourlyRate || 0) * (record.baseHours || 0);
+                    const overtimeWage = (record.hourlyRate || 0) * (record.overtimeHours || 0) * (record.overtimeRate || 0);
+                    const totalWage = (baseWage + overtimeWage).toFixed(2);
+                    tooltip.innerHTML = '<div class="tooltip-date">' + formatDateFull(record.date) + '</div>' +
+                        '<div class="tooltip-row"><span class="tooltip-label">时薪</span><span class="tooltip-value">' + (record.hourlyRate || 0) + ' 元/h</span></div>' +
+                        '<div class="tooltip-row"><span class="tooltip-label">标准工时</span><span class="tooltip-value">' + (record.baseHours || 0) + ' h</span></div>' +
+                        '<div class="tooltip-row"><span class="tooltip-label">加班工时</span><span class="tooltip-value">' + (record.overtimeHours || 0) + ' h ×' + (record.overtimeRate || 0) + '倍</span></div>' +
+                        '<div class="tooltip-row tooltip-total"><span class="tooltip-label">当日工资</span><span class="tooltip-value">' + totalWage + ' 元</span></div>';
+                } else {
+                    const totalWage = ((record.hours || 0) * (record.wage || 0)).toFixed(2);
+                    tooltip.innerHTML = '<div class="tooltip-date">' + formatDateFull(record.date) + '</div>' +
+                        '<div class="tooltip-row"><span class="tooltip-label">工时</span><span class="tooltip-value">' + record.hours + ' 天</span></div>' +
+                        '<div class="tooltip-row"><span class="tooltip-label">日薪</span><span class="tooltip-value">' + record.wage + ' 元</span></div>' +
+                        '<div class="tooltip-row tooltip-total"><span class="tooltip-label">当日工资</span><span class="tooltip-value">' + totalWage + ' 元</span></div>';
+                }
+            }
             }
             element.style.position = 'relative';
             element.appendChild(tooltip);
@@ -1594,30 +1605,20 @@
                 function animateTooltipIn() {
                     tooltip.classList.add('show');
                     if (offsetX !== -50) {
-                        tooltip.style.transform = 'translateX(' + offsetX + '%) scale(1)';
-                    }
+        function bindDayEvents(element, dateStr, record) {
+            element.dataset.date = dateStr;
+            if (record) {
+                element.dataset.hasRecord = '1';
+                element.dataset.mode = record.mode || 'day';
+                if (record.mode !== 'hour') {
+                    element.dataset.hours = record.hours;
+                    element.dataset.wage = record.wage;
+                } else {
+                    element.dataset.hours = getRecordHours(record);
+                    element.dataset.wage = getRecordWage(record);
                 }
-                requestAnimationFrame(animateTooltipIn);
+                if (record.content) element.dataset.content = '1';
             }
-            requestAnimationFrame(adjustTooltipPosition);
-
-            tooltip._autoHideTimer = setTimeout(function autoHideTooltip() { hideWageTooltip(); }, 5000);
-        }
-
-        function hideWageTooltip() {
-            if (activeWageTooltip) {
-                if (activeWageTooltip._autoHideTimer) {
-                    clearTimeout(activeWageTooltip._autoHideTimer);
-                }
-                if (activeWageTooltip._arrow) {
-                    activeWageTooltip._arrow.remove();
-                }
-                activeWageTooltip.remove();
-                activeWageTooltip = null;
-            }
-        }
-
-        // ============================================================
         // 日历格子事件绑定模块
         // ============================================================
         function getDayRecordFromElement(element) {
