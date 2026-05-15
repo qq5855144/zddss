@@ -1901,7 +1901,6 @@
         }
 
         function exportData() {
-        function exportData() {
             const data = { workLogs: workLogs, lastWage: lastWage, lastHours: lastHours, lastHourlyRate: lastHourlyRate, lastBaseHours: lastBaseHours, lastOvertimeHours: lastOvertimeHours, lastOvertimeRate: lastOvertimeRate };
             const jsonString = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonString], { type: 'application/json' });
