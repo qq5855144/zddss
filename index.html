@@ -1421,11 +1421,56 @@
                 return totalH.toFixed(1) + 'h';
             }
             return (log.hours || 0).toFixed(1) + '天';
+        function getRecordDisplayHoursShort(log) {
+            if (log.mode === 'hour') {
+                const totalH = (log.baseHours || 0) + (log.overtimeHours || 0);
+                return totalH.toFixed(1) + 'h';
+            }
+            return (log.hours || 0).toFixed(1) + '天';
         }
         function getRecordDisplayWage(log) {
             return getRecordWage(log).toFixed(2) + '元';
         }
 
+        // ============================================================
+        // 浮动提示隐藏
+        // ============================================================
+        function hideWageTooltip() {
+            if (activeWageTooltip) {
+                if (activeWageTooltip._arrow) {
+                    activeWageTooltip._arrow.remove();
+                    activeWageTooltip._arrow = null;
+                }
+                activeWageTooltip.remove();
+                activeWageTooltip = null;
+            }
+        }
+
+        // ============================================================
+        // 查看记录内容（模态框）
+        // ============================================================
+        function showContent(dateStr) {
+            function findByDateStr(l) { return l.date === dateStr; }
+            const log = workLogs.find(findByDateStr);
+            if (!log || !log.content) { showToast('暂无工作内容'); return; }
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'view-content-overlay';
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) closeContentView();
+            });
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'modal-content';
+            contentDiv.innerHTML = '<h3 class="modal-header">' + formatDateFull(log.date) + ' 工作内容</h3>' +
+                '<div class="modal-body">' + log.content.replace(/\\n/g, '<br>') + '</div>' +
+                '<button class="modal-close" onclick="closeContentView()">关闭</button>';
+            overlay.appendChild(contentDiv);
+            document.body.appendChild(overlay);
+        }
+        function closeContentView() {
+            const overlay = document.getElementById('view-content-overlay');
+            if (overlay) overlay.remove();
+        }
         function updateSummary() {
             let totalDayHours = 0, totalHourHours = 0, totalWage = 0;
             function accumulateTotals(log) {
