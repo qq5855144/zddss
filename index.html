@@ -1215,8 +1215,15 @@
         function clearForm() {
             setDefaultDate();
             document.getElementById('content-input').value = '';
-            document.getElementById('hours-input').value = (lastHours !== null && !isNaN(lastHours)) ? lastHours : '';
-            document.getElementById('wage-input').value = (lastWage !== null && !isNaN(lastWage)) ? lastWage : '';
+            if (currentMode === 'day') {
+                document.getElementById('hours-input').value = (lastHours !== null && !isNaN(lastHours)) ? lastHours : '';
+                document.getElementById('wage-input').value = (lastWage !== null && !isNaN(lastWage)) ? lastWage : '';
+            } else {
+                document.getElementById('hourly-rate-input').value = (lastHourlyRate !== null && !isNaN(lastHourlyRate)) ? lastHourlyRate : '';
+                document.getElementById('base-hours-input').value = (lastBaseHours !== null && !isNaN(lastBaseHours)) ? lastBaseHours : '';
+                document.getElementById('overtime-hours-input').value = (lastOvertimeHours !== null && !isNaN(lastOvertimeHours)) ? lastOvertimeHours : '0';
+                document.getElementById('overtime-rate-input').value = (lastOvertimeRate !== null && !isNaN(lastOvertimeRate)) ? lastOvertimeRate : '1.5';
+            }
         }
 
         // ============================================================
