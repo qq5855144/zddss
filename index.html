@@ -965,9 +965,7 @@
             </div>
         </div>
     </div>
-            </div>
-        </div>
-    </div>
+
 
     <script>
         /**
@@ -1133,6 +1131,10 @@
                 workLogs: workLogs,
                 lastWage: lastWage,
                 lastHours: lastHours,
+                lastHourlyRate: lastHourlyRate,
+                lastBaseHours: lastBaseHours,
+                lastOvertimeHours: lastOvertimeHours,
+                lastOvertimeRate: lastOvertimeRate,
                 version: '1.0',
                 timestamp: new Date().toISOString()
             };
@@ -1178,10 +1180,18 @@
                     workLogs = remoteData.workLogs;
                     lastWage = remoteData.lastWage || null;
                     lastHours = remoteData.lastHours || null;
+                    lastHourlyRate = remoteData.lastHourlyRate || null;
+                    lastBaseHours = remoteData.lastBaseHours || null;
+                    lastOvertimeHours = remoteData.lastOvertimeHours || null;
+                    lastOvertimeRate = remoteData.lastOvertimeRate || null;
                     sortWorkLogs();
                     localStorage.setItem('workLogs', JSON.stringify(workLogs));
                     if (lastWage !== null) localStorage.setItem('lastWage', lastWage);
                     if (lastHours !== null) localStorage.setItem('lastHours', lastHours);
+                    if (lastHourlyRate !== null) localStorage.setItem('lastHourlyRate', lastHourlyRate);
+                    if (lastBaseHours !== null) localStorage.setItem('lastBaseHours', lastBaseHours);
+                    if (lastOvertimeHours !== null) localStorage.setItem('lastOvertimeHours', lastOvertimeHours);
+                    if (lastOvertimeRate !== null) localStorage.setItem('lastOvertimeRate', lastOvertimeRate);
                     clearForm();
                     updateSummary();
                     renderCalendarView();
@@ -1238,10 +1248,10 @@
                 const baseHours = parseFloat(document.getElementById('base-hours-input').value);
                 const overtimeHours = parseFloat(document.getElementById('overtime-hours-input').value) || 0;
                 const overtimeRate = parseFloat(document.getElementById('overtime-rate-input').value) || 0;
-                if (hourlyRate < 0 || isNaN(hourlyRate)) { showToast('请输入有效的基础时薪'); return; }
-                if (baseHours < 0 || isNaN(baseHours)) { showToast('请输入有效的标准工时'); return; }
+                if (hourlyRate <= 0 || isNaN(hourlyRate)) { showToast('请输入有效的基础时薪（>0）'); return; }
+                if (baseHours <= 0 || isNaN(baseHours)) { showToast('请输入有效的标准工时（>0）'); return; }
                 if (isNaN(overtimeHours) || overtimeHours < 0) { showToast('请输入有效的加班工时'); return; }
-                if (isNaN(overtimeRate) || overtimeRate < 0) { showToast('请输入有效的加班倍率'); return; }
+                if (isNaN(overtimeRate) || overtimeRate <= 0) { showToast('请输入有效的加班倍率（>0）'); return; }
                 lastHourlyRate = hourlyRate; lastBaseHours = baseHours;
                 lastOvertimeHours = overtimeHours; lastOvertimeRate = overtimeRate;
                 localStorage.setItem('lastHourlyRate', hourlyRate);
@@ -1367,7 +1377,7 @@
                 document.getElementById('edit-hourly-rate').value = log.hourlyRate || '';
                 document.getElementById('edit-base-hours').value = log.baseHours || '';
                 document.getElementById('edit-overtime-hours').value = log.overtimeHours || 0;
-                document.getElementById('edit-overtime-rate').value = log.overtimeRate || 1.5;
+                document.getElementById('edit-overtime-rate').value = (log.overtimeRate != null) ? log.overtimeRate : 1.5;
             }
             document.getElementById('edit-modal').style.display = 'flex';
         }
@@ -1395,11 +1405,11 @@
                 const hourlyRate = parseFloat(document.getElementById('edit-hourly-rate').value);
                 const baseHours = parseFloat(document.getElementById('edit-base-hours').value);
                 const overtimeHours = parseFloat(document.getElementById('edit-overtime-hours').value) || 0;
-                const overtimeRate = parseFloat(document.getElementById('edit-overtime-rate').value) || 0;
-                if (hourlyRate < 0 || isNaN(hourlyRate)) { showToast('请输入有效的基础时薪'); return; }
-                if (baseHours < 0 || isNaN(baseHours)) { showToast('请输入有效的标准工时'); return; }
+                const overtimeRate = parseFloat(document.getElementById('edit-overtime-rate').value);
+                if (hourlyRate <= 0 || isNaN(hourlyRate)) { showToast('请输入有效的基础时薪（>0）'); return; }
+                if (baseHours <= 0 || isNaN(baseHours)) { showToast('请输入有效的标准工时（>0）'); return; }
                 if (isNaN(overtimeHours) || overtimeHours < 0) { showToast('请输入有效的加班工时'); return; }
-                if (isNaN(overtimeRate) || overtimeRate < 0) { showToast('请输入有效的加班倍率'); return; }
+                if (isNaN(overtimeRate) || overtimeRate <= 0) { showToast('请输入有效的加班倍率（>0）'); return; }
                 updatedRecord = { date: date, content: content, hourlyRate: hourlyRate, baseHours: baseHours, overtimeHours: overtimeHours, overtimeRate: overtimeRate, mode: 'hour' };
             }
             workLogs[index] = updatedRecord;
