@@ -1404,11 +1404,11 @@
                 const hourlyRate = parseFloat(document.getElementById('edit-hourly-rate').value);
                 const baseHours = parseFloat(document.getElementById('edit-base-hours').value);
                 const overtimeHours = parseFloat(document.getElementById('edit-overtime-hours').value) || 0;
-                const overtimeRate = parseFloat(document.getElementById('edit-overtime-rate').value);
+                const overtimeRate = (overtimeHours > 0) ? (parseFloat(document.getElementById('edit-overtime-rate').value) || 1.5) : 1.5;
                 if (hourlyRate <= 0 || isNaN(hourlyRate)) { showToast('请输入有效的基础时薪（>0）'); return; }
                 if (baseHours <= 0 || isNaN(baseHours)) { showToast('请输入有效的标准工时（>0）'); return; }
                 if (isNaN(overtimeHours) || overtimeHours < 0) { showToast('请输入有效的加班工时'); return; }
-                if (isNaN(overtimeRate) || overtimeRate <= 0) { showToast('请输入有效的加班倍率（>0）'); return; }
+                if (overtimeHours > 0 && (isNaN(overtimeRate) || overtimeRate <= 0)) { showToast('请输入有效的加班倍率（>0）'); return; }
                 updatedRecord = { date: date, content: content, hourlyRate: hourlyRate, baseHours: baseHours, overtimeHours: overtimeHours, overtimeRate: overtimeRate, mode: 'hour' };
             }
             workLogs[index] = updatedRecord;
