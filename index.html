@@ -1802,7 +1802,7 @@
                 clearTimeout(longPressTimer);
                 longPressTimer = null;
                 if (record) {
-                    showWageTooltip(element, record);
+                    showWageTooltip(element, record, false, element.dataset.date);
                 } else if (isPastRest) {
                     showWageTooltip(element, null, true, element.dataset.date);
                 } else {
