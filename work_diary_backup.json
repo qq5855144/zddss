@@ -7,6 +7,12 @@
       "wage": 320
     },
     {
+      "date": "2026-05-19",
+      "content": "",
+      "hours": 1.9,
+      "wage": 320
+    },
+    {
       "date": "2026-05-18",
       "content": "",
       "hours": 1,
@@ -392,7 +398,7 @@
     }
   ],
   "lastWage": 320,
-  "lastHours": 1,
+  "lastHours": 1.9,
   "version": "1.0",
-  "timestamp": "2026-05-20T11:05:54.191Z"
+  "timestamp": "2026-05-20T11:06:29.637Z"
 }
